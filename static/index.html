@@ -597,13 +597,13 @@
             <div class="nav-sidebar" :class="{ expanded: sidebarExpanded }">
                 <div class="nav-logo">Y</div>
                 <div class="nav-menu">
-                    <div class="nav-item" :class="{ active: currentPage === 'rag' }" @click="currentPage = 'rag'">
-                        <span class="nav-icon">🔍</span>
-                        <span class="nav-text">RAG</span>
-                    </div>
                     <div class="nav-item" :class="{ active: currentPage === 'home' }" @click="currentPage = 'home'">
                         <span class="nav-icon">🏠</span>
                         <span class="nav-text">首页</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'rag' }" @click="currentPage = 'rag'">
+                        <span class="nav-icon">🔍</span>
+                        <span class="nav-text">RAG</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="currentPage = 'files'">
                         <span class="nav-icon">📁</span>
