@@ -156,7 +156,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
         .file-panel.collapsed {
@@ -179,11 +179,10 @@
         }
 
         .upload-section {
-            flex: 1;
+            flex-shrink: 0;
+            display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 50px;
             gap: 12px;
         }
 
@@ -211,19 +210,36 @@
             margin-top: 8px;
         }
 
-        .file-list {
-            min-height: 200px;
-            height: 300px;
-            overflow-y: auto;
+        .file-list-container {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid #ebeef5;
+            padding-top: 8px;
         }
 
         .file-list-title {
             font-size: 14px;
             font-weight: 600;
             color: #303133;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
+            padding: 10px 12px;
             border-bottom: 2px solid #409eff;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            min-height: 100px;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border-bottom: 1px solid #ebeef5;
+            flex-shrink: 0;
         }
 
         .file-item {
@@ -301,7 +317,7 @@
         .chat-panel {
             flex: 1;
             display: flex;
-            flex-direction: column;
+            gap: 16px;
             padding: 0 20px 20px 20px;
         }
 
@@ -311,8 +327,82 @@
             border-radius: 4px;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-width: 400px;
+        }        /* 右侧radio侧边栏 */
+        .radio-sidebar {
+            width: 320px;
+            min-width: 320px;
+            background: white;
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        .radio-sidebar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #409eff;
+        }
+
+        .radio-option-wrapper {
+            margin-bottom: 4px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .radio-option .option-arrow {
+            margin-left: auto;
+            font-size: 10px;
+            color: #909399;
+        }
+        
+        .option-config {
+            padding: 8px 12px 12px 12px;
+            background: #fafafa;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .option-config .el-textarea__inner {
+            background: white;
+            border: 1px solid #dcdfe6;
+            font-size: 12px;
+        }        
+        .radio-option:hover {
+            background: #f5f7fa;
+        }
+        
+        .radio-option.is-selected {
+            background: #ecf5ff;
+            color: #409eff;
+        }
+        
+        .radio-option .option-icon {
+            font-size: 18px;
+        }
+        
+        .radio-option .option-text {
+            font-size: 13px;
+            color: #606266;
+            line-height: 1.5;
+            flex: 1;
+        }        .radio-option.is-selected .option-text {
+            color: #409eff;
+            font-weight: 500;
         }
 
         .chat-messages {
@@ -557,21 +647,34 @@
                                 <div slot="tip" class="el-upload__tip">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
                             </el-upload>
                         </div>
-                        <div class="file-list">
+                        
+                        <!-- 文件列表 -->
+                        <div class="file-list-container">
                             <div class="file-list-title">已上传文件</div>
-                            <el-checkbox-group v-model="selectedFiles" @change="handleFileSelectChange">
-                                <div v-for="(file, index) in uploadedFiles" :key="file.name" class="file-item" :class="{ 'is-selected': selectedFiles.includes(file.name) }">
-                                    <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
-                                    <div class="file-icon">{{ getFileIcon(file.type) }}</div>
-                                    <div class="file-info">
-                                        <div class="file-name">{{ file.name }}</div>
-                                        <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                            <div class="search-box">
+                                <el-input
+                                    placeholder="搜索文件名..."
+                                    v-model="fileSearch"
+                                    prefix-icon="el-icon-search"
+                                    size="small"
+                                    clearable>
+                                </el-input>
+                            </div>
+                            <div class="file-list">
+                                <el-checkbox-group v-model="selectedFiles" @change="handleFileSelectChange">
+                                    <div v-for="(file, index) in filteredFiles" :key="file.name" class="file-item" :class="{ 'is-selected': selectedFiles.includes(file.name) }">
+                                        <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
+                                        <div class="file-icon">{{ getFileIcon(file.type) }}</div>
+                                        <div class="file-info">
+                                            <div class="file-name">{{ file.name }}</div>
+                                            <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                                        </div>
+                                        <el-tag type="success" size="small">已上传</el-tag>
+                                        <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
                                     </div>
-                                    <el-tag type="success" size="small">已上传</el-tag>
-                                    <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
-                                </div>
-                            </el-checkbox-group>
-                            <el-empty v-if="uploadedFiles.length === 0" description="暂无上传文件" :image-size="80"></el-empty>
+                                </el-checkbox-group>
+                                <el-empty v-if="filteredFiles.length === 0" description="暂无文件" :image-size="60"></el-empty>
+                            </div>
                         </div>
 
                         <div class="file-list-actions">
@@ -588,7 +691,7 @@
                                 <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.type">
                                    <div class="avatar">{{ msg.type === 'bot' ? '🤖' : '👤' }}</div>
                                     <div class="message-info">
-                                        <div class="username">{{ msg.type === 'bot' ? '小助手' : '我' }}</div>
+                                        <div class="username">{{ msg.type === 'bot' ? 'AI小助手' : '我' }}</div>
                                         <div class="message-content">{{ msg.content }}</div>
                                     </div>
                                 </div>
@@ -604,6 +707,181 @@
                                         resize="none">
                                     </el-input>
                                     <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px; align-self: flex-end;">发送</el-button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧radio侧边栏 -->
+                        <div class="radio-sidebar">
+                            <div class="radio-sidebar-title">RAG方法</div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option1' }" @click="toggleOption('option1')">
+                                    <span class="option-icon">📚</span>
+                                    <span class="option-text">1.SimpleRAG（简单切块）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option1' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option1'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option1" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option2' }" @click="toggleOption('option2')">
+                                    <span class="option-icon">💬</span>
+                                    <span class="option-text">2.Semantic Chunking（语义切块）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option2' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option2'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option2" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option3' }" @click="toggleOption('option3')">
+                                    <span class="option-icon">🔍</span>
+                                    <span class="option-text">3.Context Enriched Retrieval（上下文增强检索）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option3' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option3'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option3" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option4' }" @click="toggleOption('option4')">
+                                    <span class="option-icon">📝</span>
+                                    <span class="option-text">4.Contextual Chunk Headers（上下文分块标题）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option4' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option4'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option4" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option5' }" @click="toggleOption('option5')">
+                                    <span class="option-icon">🌐</span>
+                                    <span class="option-text">5.Document Augmentation（文档增强）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option5' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option5'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option5" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option6' }" @click="toggleOption('option6')">
+                                    <span class="option-icon">🔄</span>
+                                    <span class="option-text">6.Query Transformation（查询转换）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option6' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option6'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option6" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option7' }" @click="toggleOption('option7')">
+                                    <span class="option-icon">📊</span>
+                                    <span class="option-text">7.Reranker（重排序）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option7' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option7'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option7" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option8' }" @click="toggleOption('option8')">
+                                    <span class="option-icon">🔗</span>
+                                    <span class="option-text">8.RSE（语义扩展重排序）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option8' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option8'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option8" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option9' }" @click="toggleOption('option9')">
+                                    <span class="option-icon">🔁</span>
+                                    <span class="option-text">9.Feedback Loop（反馈闭环）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option9' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option9'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option9" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option10' }" @click="toggleOption('option10')">
+                                    <span class="option-icon">⚡</span>
+                                    <span class="option-text">10.Adaptive RAG（自适应检索增强生成）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option10' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option10'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option10" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option11' }" @click="toggleOption('option11')">
+                                    <span class="option-icon">🧠</span>
+                                    <span class="option-text">11.Self RAG（自反思检索增强生成）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option11' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option11'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option11" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option12' }" @click="toggleOption('option12')">
+                                    <span class="option-icon">🕸️</span>
+                                    <span class="option-text">12.Knowledge Graph（知识图谱）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option12' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option12'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option12" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option13' }" @click="toggleOption('option13')">
+                                    <span class="option-icon">🏗️</span>
+                                    <span class="option-text">13.Hierarchical Indices（层次化索引）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option13' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option13'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option13" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option14' }" @click="toggleOption('option14')">
+                                    <span class="option-icon">💡</span>
+                                    <span class="option-text">14.HyDE（假设文档嵌入）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option14' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option14'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option14" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option15' }" @click="toggleOption('option15')">
+                                    <span class="option-icon">🔥</span>
+                                    <span class="option-text">15.Fusion（融合检索）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option15' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option15'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option15" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option16' }" @click="toggleOption('option16')">
+                                    <span class="option-icon">✅</span>
+                                    <span class="option-text">16.CRAG（纠错型RAG）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option16' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option16'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option16" resize="none"></el-input>
+                                </div>
+                            </div>
+                            <div class="radio-option-wrapper">
+                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option17' }" @click="toggleOption('option17')">
+                                    <span class="option-icon">🖼️</span>
+                                    <span class="option-text">17.Multi-Modal RAG（多模态检索增强生成）</span>
+                                    <span class="option-arrow">{{ expandedOption === 'option17' ? '▲' : '▼' }}</span>
+                                </div>
+                                <div class="option-config" v-if="expandedOption === 'option17'">
+                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option17" resize="none"></el-input>
                                 </div>
                             </div>
                         </div>

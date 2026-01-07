@@ -7,6 +7,28 @@ new Vue({
             sidebarExpanded: true,
             currentPage: 'rag',
             showFilePanel: true,
+            selectedOption: 'option1',
+            expandedOption: 'option1',
+            fileSearch: '',
+            ragConfigs: {
+                option1: '',
+                option2: '',
+                option3: '',
+                option4: '',
+                option5: '',
+                option6: '',
+                option7: '',
+                option8: '',
+                option9: '',
+                option10: '',
+                option11: '',
+                option12: '',
+                option13: '',
+                option14: '',
+                option15: '',
+                option16: '',
+                option17: ''
+            },
             messages: [
                 {
                     type: 'bot',
@@ -21,9 +43,26 @@ new Vue({
         this.loadUploadedFiles();
     },
     
+    computed: {
+        filteredFiles() {
+            if (!this.fileSearch.trim()) {
+                return this.uploadedFiles;
+            }
+            const search = this.fileSearch.toLowerCase();
+            return this.uploadedFiles.filter(file => 
+                file.name.toLowerCase().includes(search)
+            );
+        }
+    },
+    
     methods: {
         toggleSidebar() {
             this.sidebarExpanded = !this.sidebarExpanded;
+        },
+        
+        toggleOption(option) {
+            this.selectedOption = option;
+            this.expandedOption = this.expandedOption === option ? null : option;
         },
         
         beforeUpload(file) {
