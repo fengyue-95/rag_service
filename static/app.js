@@ -4,6 +4,9 @@ new Vue({
         return {
             uploadedFiles: [],
             selectedFiles: [],
+            sidebarExpanded: true,
+            currentPage: 'rag',
+            showFilePanel: true,
             messages: [
                 {
                     type: 'bot',
@@ -17,7 +20,12 @@ new Vue({
     mounted() {
         this.loadUploadedFiles();
     },
+    
     methods: {
+        toggleSidebar() {
+            this.sidebarExpanded = !this.sidebarExpanded;
+        },
+        
         beforeUpload(file) {
             const allowedExtensions = ['.txt', '.md', '.csv', '.pdf', '.doc', '.docx', '.xls', '.xlsx'];
             const fileExt = '.' + file.name.split('.').pop().toLowerCase();
@@ -241,6 +249,28 @@ new Vue({
             } catch (error) {
                 console.error('加载文件列表失败:', error);
             }
+        },
+        
+        getPageIcon(page) {
+            const icons = {
+                'home': '🏠',
+                'files': '📁',
+                'chat': '💬',
+                'history': '📜',
+                'settings': '⚙️'
+            };
+            return icons[page] || '📄';
+        },
+        
+        getPageTitle(page) {
+            const titles = {
+                'home': '首页',
+                'files': '文件管理',
+                'chat': '智能对话',
+                'history': '历史记录',
+                'settings': '设置'
+            };
+            return titles[page] || '页面';
         }
     }
 });

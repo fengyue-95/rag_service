@@ -23,23 +23,153 @@
             display: flex;
             height: 100vh;
             width: 100vw;
+            position: relative;
         }
 
-        .left-panel {
-            width: 20%;
-            min-width: 400px;
-            background: white;
-            border-right: 1px solid #e4e7ed;
-            padding: 24px;
+        /* 左侧导航侧边栏 */
+        .nav-sidebar {
+            width: 60px;
+            min-width: 60px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            align-items: center;
+            padding: 16px 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .nav-sidebar.expanded {
+            width: 200px;
+            min-width: 200px;
+        }
+
+        .nav-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .nav-sidebar.expanded .nav-logo {
+            width: 48px;
+            height: 48px;
+            font-size: 24px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            color: #8b8b9e;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            color: #fff;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.4) 0%, transparent 100%);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            display: none;
+            margin-left: 12px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .nav-sidebar.expanded .nav-text {
+            display: block;
+        }
+
+        .nav-toggle {
+            padding: 12px;
+            color: #8b8b9e;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-toggle:hover {
+            color: #fff;
+        }
+
+        /* 右侧主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            background: #f5f7fa;
+            overflow: hidden;
+        }
+
+        /* 文件管理面板 */
+        .file-panel {
+            width: 320px;
+            min-width: 320px;
+            background: white;
+            border-right: 1px solid #e4e7ed;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
             overflow-y: auto;
+        }
+
+        .file-panel.collapsed {
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+            border-right: none;
         }
 
         .logo-area {
             text-align: center;
-            padding: 16px 20px;
+            padding: 12px 16px;
             border: 2px dashed #409eff;
             border-radius: 4px;
             color: #409eff;
@@ -54,7 +184,7 @@
             align-items: center;
             justify-content: center;
             min-height: 50px;
-            gap: 16px;
+            gap: 12px;
         }
 
         .upload-section .el-upload {
@@ -65,10 +195,9 @@
         }
 
         .upload-section .el-button {
-            width: 200px;
-            height: 50px;
-            font-size: 16px;
-            display: inline-block !important;
+            width: 100%;
+            height: 44px;
+            font-size: 14px;
         }
 
         .upload-section .el-upload-dragger {
@@ -78,38 +207,40 @@
         .upload-section .el-upload__tip {
             text-align: center;
             color: #909399;
-            font-size: 14px;
+            font-size: 12px;
             margin-top: 8px;
         }
 
-        .upload-demo .el-upload {
-            display: block;
-        }
-
-        .upload-demo .el-upload-list {
-            display: none;
-        }
-
         .file-list {
-            min-height: 300px;
-            height: 400px;
+            min-height: 200px;
+            height: 300px;
             overflow-y: auto;
+        }
+
+        .file-list-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #409eff;
         }
 
         .file-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
+            gap: 8px;
+            padding: 10px;
             border: 1px solid #e4e7ed;
             border-radius: 4px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             transition: all 0.3s;
+            font-size: 13px;
         }
 
         .file-item:hover {
             border-color: #409eff;
-            box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
+            box-shadow: 0 2px 8px 0 rgba(64, 158, 255, 0.15);
         }
 
         .file-item.is-selected {
@@ -121,21 +252,57 @@
             flex-shrink: 0;
         }
 
-        .file-list-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #303133;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #409eff;
+        .file-list-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 0;
+            border-top: 1px solid #e4e7ed;
+            margin-top: auto;
         }
 
-        .right-panel {
+        .file-list-actions .el-button {
             flex: 1;
-            /*padding: 24px;*/
-            background: #f5f7fa;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .file-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #303133;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 11px;
+            color: #909399;
+            margin-top: 2px;
+        }
+
+        /* 对话区域 */
+        .chat-panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
+            padding: 0 20px 20px 20px;
         }
 
         .chat-box {
@@ -184,8 +351,8 @@
         }
 
         .message-content {
-            max-width: 70%;
-            min-width: 200px;
+            max-width: 55%;
+            min-width: 150px;
             padding: 12px 16px;
             border-radius: 8px;
             font-size: 14px;
@@ -216,8 +383,6 @@
         .message-info {
             display: flex;
             flex-direction: column;
-            max-width: 70%;
-            min-width: 200px;
         }
 
         .message.user .message-info {
@@ -303,77 +468,156 @@
             color: #909399;
             margin-top: 4px;
         }
+
+        /* 空白页样式 */
+        .empty-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: #909399;
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="container">
-            <!-- 左侧功能区域 -->
-            <div class="left-panel">
-                <div class="logo-area">RAG/index</div>
-                
-                <div class="upload-section">
-                    <el-upload
-                        class="upload-demo"
-                        action="/upload"
-                        :on-success="handleUploadSuccess"
-                        :on-error="handleUploadError"
-                        :before-upload="beforeUpload"
-                        :show-file-list="false">
-                        <el-button type="primary" icon="el-icon-upload2" size="large">点击上传文件</el-button>
-                        <div slot="tip" class="el-upload__tip">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
-                    </el-upload>
+            <!-- 左侧导航侧边栏 -->
+            <div class="nav-sidebar" :class="{ expanded: sidebarExpanded }">
+                <div class="nav-logo">Y</div>
+                <div class="nav-menu">
+                    <div class="nav-item" :class="{ active: currentPage === 'rag' }" @click="currentPage = 'rag'">
+                        <span class="nav-icon">🔍</span>
+                        <span class="nav-text">RAG</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'home' }" @click="currentPage = 'home'">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">首页</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="currentPage = 'files'">
+                        <span class="nav-icon">📁</span>
+                        <span class="nav-text">文件管理</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'chat' }" @click="currentPage = 'chat'">
+                        <span class="nav-icon">💬</span>
+                        <span class="nav-text">智能对话</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'history' }" @click="currentPage = 'history'">
+                        <span class="nav-icon">📜</span>
+                        <span class="nav-text">历史记录</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'settings' }" @click="currentPage = 'settings'">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">设置</span>
+                    </div>
                 </div>
-                <div class="file-list">
-                    <div class="file-list-title">已上传文件</div>
-                    <el-checkbox-group v-model="selectedFiles" @change="handleFileSelectChange">
-                        <div v-for="(file, index) in uploadedFiles" :key="file.name" class="file-item" :class="{ 'is-selected': selectedFiles.includes(file.name) }">
-                            <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
-                            <div class="file-icon">{{ getFileIcon(file.type) }}</div>
-                            <div class="file-info">
-                                <div class="file-name">{{ file.name }}</div>
-                                <div class="file-size">{{ formatFileSize(file.size) }}</div>
-                            </div>
-                            <el-tag type="success" size="small">已上传</el-tag>
-                            <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
-                        </div>
-                    </el-checkbox-group>
-                    <el-empty v-if="uploadedFiles.length === 0" description="暂无上传文件" :image-size="80"></el-empty>
-                </div>
-
-                <div class="file-list-actions">
-                    <el-button type="primary" size="medium" @click="handleIndexClick">索引</el-button>
-                    <el-button type="warning" size="medium" @click="handleDeleteIndexClick" :disabled="selectedFiles.length === 0">删除索引</el-button>
-                    <el-button type="danger" size="medium" @click="handleDeleteClick" :disabled="selectedFiles.length === 0">删除</el-button>
+                <div class="nav-toggle" @click="toggleSidebar">
+                    <span class="nav-icon">{{ sidebarExpanded ? '◀' : '▶' }}</span>
                 </div>
             </div>
 
-            <!-- 右侧对话框区域 -->
-            <div class="right-panel">
-                <div class="chat-box">
-                    <div class="chat-messages" ref="chatMessages">
-                        <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.type">
-                           <div class="avatar">{{ msg.type === 'bot' ? '🤖' : '👤' }}</div>
-                            <div class="message-info">
-                                <div class="username">{{ msg.type === 'bot' ? '小助手' : '我' }}</div>
-                                <div class="message-content">{{ msg.content }}</div>
+            <!-- 右侧主内容区域 -->
+            <div class="main-content">
+                <!-- RAG页面：文件上传+对话框 -->
+                <template v-if="currentPage === 'rag'">
+                    <!-- 文件管理面板 -->
+                    <div class="file-panel" :class="{ collapsed: !showFilePanel }">
+                        <div class="logo-area">RAG/index</div>
+                        
+                        <div class="upload-section">
+                            <el-upload
+                                class="upload-demo"
+                                action="/upload"
+                                :on-success="handleUploadSuccess"
+                                :on-error="handleUploadError"
+                                :before-upload="beforeUpload"
+                                :show-file-list="false">
+                                <el-button type="primary" icon="el-icon-upload2" size="large">点击上传文件</el-button>
+                                <div slot="tip" class="el-upload__tip">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
+                            </el-upload>
+                        </div>
+                        <div class="file-list">
+                            <div class="file-list-title">已上传文件</div>
+                            <el-checkbox-group v-model="selectedFiles" @change="handleFileSelectChange">
+                                <div v-for="(file, index) in uploadedFiles" :key="file.name" class="file-item" :class="{ 'is-selected': selectedFiles.includes(file.name) }">
+                                    <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
+                                    <div class="file-icon">{{ getFileIcon(file.type) }}</div>
+                                    <div class="file-info">
+                                        <div class="file-name">{{ file.name }}</div>
+                                        <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                                    </div>
+                                    <el-tag type="success" size="small">已上传</el-tag>
+                                    <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
+                                </div>
+                            </el-checkbox-group>
+                            <el-empty v-if="uploadedFiles.length === 0" description="暂无上传文件" :image-size="80"></el-empty>
+                        </div>
+
+                        <div class="file-list-actions">
+                            <el-button type="primary" size="medium" @click="handleIndexClick">索引</el-button>
+                            <el-button type="warning" size="medium" @click="handleDeleteIndexClick" :disabled="selectedFiles.length === 0">删除索引</el-button>
+                            <el-button type="danger" size="medium" @click="handleDeleteClick" :disabled="selectedFiles.length === 0">删除</el-button>
+                        </div>
+                    </div>
+
+                    <!-- 对话面板 -->
+                    <div class="chat-panel">
+                        <div class="chat-box">
+                            <div class="chat-messages" ref="chatMessages">
+                                <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.type">
+                                   <div class="avatar">{{ msg.type === 'bot' ? '🤖' : '👤' }}</div>
+                                    <div class="message-info">
+                                        <div class="username">{{ msg.type === 'bot' ? '小助手' : '我' }}</div>
+                                        <div class="message-content">{{ msg.content }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <div class="input-wrapper">
+                                    <el-input
+                                        type="textarea"
+                                        :rows="3"
+                                        placeholder="输入你的消息..."
+                                        v-model="inputMessage"
+                                        @keydown.ctrl.enter="sendMessage"
+                                        resize="none">
+                                    </el-input>
+                                    <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px; align-self: flex-end;">发送</el-button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <div class="input-wrapper">
-                            <el-input
-                                type="textarea"
-                                :rows="3"
-                                placeholder="输入你的消息..."
-                                v-model="inputMessage"
-                                @keydown.ctrl.enter="sendMessage"
-                                resize="none">
-                            </el-input>
-                            <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px; align-self: flex-end;">发送</el-button>
-                        </div>
+                </template>
+
+                <!-- 其他页面：空白页 -->
+                <template v-else>
+                    <div class="empty-page">
+                        <div class="empty-icon">{{ getPageIcon(currentPage) }}</div>
+                        <div class="empty-title">{{ getPageTitle(currentPage) }}</div>
+                        <div class="empty-desc">页面开发中...</div>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
     </div>
