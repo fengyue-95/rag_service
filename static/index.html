@@ -240,6 +240,18 @@
             padding: 8px 12px;
             border-bottom: 1px solid #ebeef5;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box .el-input {
+            flex: 1;
+        }
+
+        .select-all-checkbox {
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .file-item {
@@ -339,7 +351,8 @@
             padding: 16px;
             box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
             height: calc(100vh - 40px);
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
         .radio-sidebar-title {
             font-size: 14px;
@@ -348,6 +361,34 @@
             margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 2px solid #409eff;
+        }
+
+        .rag-method-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .rag-method-section:first-child {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e4e7ed;
+        }
+
+        .rag-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #606266;
+            padding: 8px 0;
+            flex-shrink: 0;
+        }
+
+        .rag-method-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .radio-option-wrapper {
@@ -381,6 +422,40 @@
             background: white;
             border: 1px solid #dcdfe6;
             font-size: 12px;
+        }
+        
+        .option-suggestion {
+            background: #f0f9eb;
+            border: 1px solid #c2e7b0;
+            border-radius: 4px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #606266;
+            line-height: 1.6;
+        }
+        
+        .option-suggestion-title {
+            font-weight: 600;
+            color: #67c23a;
+            margin-bottom: 6px;
+        }
+        
+        .option-suggestion-row {
+            display: flex;
+            margin-bottom: 4px;
+        }
+        
+        .option-suggestion-label {
+            font-weight: 500;
+            color: #303133;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        
+        .option-suggestion-value {
+            color: #606266;
+            flex: 1;
         }        
         .radio-option:hover {
             background: #f5f7fa;
@@ -596,7 +671,7 @@
             <!-- 左侧导航侧边栏 -->
             <div class="nav-sidebar" :class="{ expanded: sidebarExpanded }">
                 <div class="nav-logo">Y</div>
-                <div class="nav-menu">
+                <div class="nav-menu">，
                     <div class="nav-item" :class="{ active: currentPage === 'home' }" @click="currentPage = 'home'">
                         <span class="nav-icon">🏠</span>
                         <span class="nav-text">首页</span>
@@ -652,6 +727,7 @@
                         <div class="file-list-container">
                             <div class="file-list-title">已上传文件</div>
                             <div class="search-box">
+                                <el-checkbox v-model="selectAll" @change="handleSelectAll" size="small" class="select-all-checkbox">全选</el-checkbox>
                                 <el-input
                                     placeholder="搜索文件名..."
                                     v-model="fileSearch"
@@ -666,9 +742,10 @@
                                         <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
                                         <div class="file-icon">{{ getFileIcon(file.type) }}</div>
                                         <div class="file-info">
-                                            <div class="file-name">{{ file.name }}</div>
+                                            <div class="file-name" :title="file.name">{{ file.name }}</div>
                                             <div class="file-size">{{ formatFileSize(file.size) }}</div>
                                         </div>
+                                        <el-button type="text" icon="el-icon-document-copy" size="mini" @click.stop="copyFileName(file.name)" title="复制文件名"></el-button>
                                         <el-tag type="success" size="small">已上传</el-tag>
                                         <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
                                     </div>
@@ -714,174 +791,358 @@
                         <!-- 右侧radio侧边栏 -->
                         <div class="radio-sidebar">
                             <div class="radio-sidebar-title">RAG方法</div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option1' }" @click="toggleOption('option1')">
-                                    <span class="option-icon">📚</span>
-                                    <span class="option-text">1.SimpleRAG（简单切块）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option1' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option1'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option1" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option2' }" @click="toggleOption('option2')">
-                                    <span class="option-icon">💬</span>
-                                    <span class="option-text">2.Semantic Chunking（语义切块）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option2' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option2'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option2" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option3' }" @click="toggleOption('option3')">
-                                    <span class="option-icon">🔍</span>
-                                    <span class="option-text">3.Context Enriched Retrieval（上下文增强检索）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option3' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option3'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option3" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option4' }" @click="toggleOption('option4')">
-                                    <span class="option-icon">📝</span>
-                                    <span class="option-text">4.Contextual Chunk Headers（上下文分块标题）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option4' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option4'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option4" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option5' }" @click="toggleOption('option5')">
-                                    <span class="option-icon">🌐</span>
-                                    <span class="option-text">5.Document Augmentation（文档增强）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option5' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option5'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option5" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option6' }" @click="toggleOption('option6')">
-                                    <span class="option-icon">🔄</span>
-                                    <span class="option-text">6.Query Transformation（查询转换）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option6' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option6'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option6" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option7' }" @click="toggleOption('option7')">
-                                    <span class="option-icon">📊</span>
-                                    <span class="option-text">7.Reranker（重排序）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option7' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option7'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option7" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option8' }" @click="toggleOption('option8')">
-                                    <span class="option-icon">🔗</span>
-                                    <span class="option-text">8.RSE（语义扩展重排序）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option8' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option8'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option8" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option9' }" @click="toggleOption('option9')">
-                                    <span class="option-icon">🔁</span>
-                                    <span class="option-text">9.Feedback Loop（反馈闭环）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option9' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option9'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option9" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option10' }" @click="toggleOption('option10')">
-                                    <span class="option-icon">⚡</span>
-                                    <span class="option-text">10.Adaptive RAG（自适应检索增强生成）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option10' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option10'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option10" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option11' }" @click="toggleOption('option11')">
-                                    <span class="option-icon">🧠</span>
-                                    <span class="option-text">11.Self RAG（自反思检索增强生成）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option11' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option11'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option11" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option12' }" @click="toggleOption('option12')">
-                                    <span class="option-icon">🕸️</span>
-                                    <span class="option-text">12.Knowledge Graph（知识图谱）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option12' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option12'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option12" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option13' }" @click="toggleOption('option13')">
-                                    <span class="option-icon">🏗️</span>
-                                    <span class="option-text">13.Hierarchical Indices（层次化索引）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option13' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option13'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option13" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option14' }" @click="toggleOption('option14')">
-                                    <span class="option-icon">💡</span>
-                                    <span class="option-text">14.HyDE（假设文档嵌入）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option14' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option14'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option14" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option15' }" @click="toggleOption('option15')">
-                                    <span class="option-icon">🔥</span>
-                                    <span class="option-text">15.Fusion（融合检索）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option15' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option15'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option15" resize="none"></el-input>
+                            
+                            <!-- 原始文档增强 -->
+                            <div class="rag-method-section">
+                                <div class="rag-section-title">📄 原始文档增强</div>
+                                <div class="rag-method-list">
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option1' }" @click="toggleOption('option1')">
+                                            <span class="option-icon">📚</span>
+                                            <span class="option-text">1.SimpleRAG（简单切块）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option1' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option1'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">验证原型、快速上线，对精度要求不高的场景</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">结构简单、段落分明的短文，如博客、简单新闻</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option2' }" @click="toggleOption('option2')">
+                                            <span class="option-icon">💬</span>
+                                            <span class="option-text">2.Semantic Chunking（语义切块）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option2' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option2'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">句子间逻辑紧密，传统固定长度切块会割裂语义的场景</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">非规范格式文档、长随笔、文学作品</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option3' }" @click="toggleOption('option3')">
+                                            <span class="option-icon">🔍</span>
+                                            <span class="option-text">3.Context Enriched Retrieval（上下文增强检索）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option3' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option3'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">需要精确匹配但又不能丢失大背景信息的场景</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">技术手册、法律条文、需要"以小见大"的精细检索</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option4' }" @click="toggleOption('option4')">
+                                            <span class="option-icon">📝</span>
+                                            <span class="option-text">4.Contextual Chunk Headers（上下文分块标题）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option4' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option4'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">分块后，单个 Chunk 无法自解释（不知道在说谁）的情况</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">多层级文档（如：产品 A 的第 B 章下的第 C 节）、财务报表说明</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option5' }" @click="toggleOption('option5')">
+                                            <span class="option-icon">🌐</span>
+                                            <span class="option-text">5.Document Augmentation（文档增强）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option5' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option5'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">原始文档信息密度低，或者术语太多的场景</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">原始草稿、缩写密集的专业论文</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option12' }" @click="toggleOption('option12')">
+                                            <span class="option-icon">🕸️</span>
+                                            <span class="option-text">12.Knowledge Graph（知识图谱）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option12' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option12'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">强调实体关系、逻辑链路推导</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">人物关系图谱、医药配方逻辑、代码调用链</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option13' }" @click="toggleOption('option13')">
+                                            <span class="option-icon">🏗️</span>
+                                            <span class="option-text">13.Hierarchical Indices（层次化索引）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option13' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option13'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">文档量巨大，需要在"大纲"和"细节"间快速切换</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">超长文档、百科全书、企业内部庞杂的知识库</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option16' }" @click="toggleOption('option16')">
-                                    <span class="option-icon">✅</span>
-                                    <span class="option-text">16.CRAG（纠错型RAG）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option16' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option16'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option16" resize="none"></el-input>
-                                </div>
-                            </div>
-                            <div class="radio-option-wrapper">
-                                <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option17' }" @click="toggleOption('option17')">
-                                    <span class="option-icon">🖼️</span>
-                                    <span class="option-text">17.Multi-Modal RAG（多模态检索增强生成）</span>
-                                    <span class="option-arrow">{{ expandedOption === 'option17' ? '▲' : '▼' }}</span>
-                                </div>
-                                <div class="option-config" v-if="expandedOption === 'option17'">
-                                    <el-input type="textarea" :rows="3" placeholder="输入参数配置..." v-model="ragConfigs.option17" resize="none"></el-input>
+                            
+                            <!-- 查询文档增强 -->
+                            <div class="rag-method-section">
+                                <div class="rag-section-title">🔍 查询文档增强</div>
+                                <div class="rag-method-list">
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option6' }" @click="toggleOption('option6')">
+                                            <span class="option-icon">🔄</span>
+                                            <span class="option-text">6.Query Transformation（查询转换）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option6' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option6'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">用户提问含糊不清或过于复杂需要拆解</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">复杂咨询、多步骤逻辑问题</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option7' }" @click="toggleOption('option7')">
+                                            <span class="option-icon">📊</span>
+                                            <span class="option-text">7.Reranker（重排序）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option7' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option7'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">初步召回噪声多，必须确保 Top-K 极度准确</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">对准确率要求极高的场景（医疗、金融咨询）</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option8' }" @click="toggleOption('option8')">
+                                            <span class="option-icon">🔗</span>
+                                            <span class="option-text">8.RSE（语义扩展重排序）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option8' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option8'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">检索到的分块需要结合其上下文才能组成完整回答</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">叙事性强的文档、因果关系复杂的事故分析报告</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option9' }" @click="toggleOption('option9')">
+                                            <span class="option-icon">🔁</span>
+                                            <span class="option-text">9.Feedback Loop（反馈闭环）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option9' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option9'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">需要循环优化检索结果，提高回答质量</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">复杂查询、需要多轮检索细化的场景</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option10' }" @click="toggleOption('option10')">
+                                            <span class="option-icon">⚡</span>
+                                            <span class="option-text">10.Adaptive RAG（自适应检索增强生成）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option10' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option10'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">自动判断是直接回答、检索还是深入研究</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">通用助手、需要动态处理简单与困难任务的系统</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option11' }" @click="toggleOption('option11')">
+                                            <span class="option-icon">🧠</span>
+                                            <span class="option-text">11.Self RAG（自反思检索增强生成）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option11' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option11'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">需要自我反思和评估检索结果的相关性</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">需要高精度、高可靠性的专业领域问答</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option14' }" @click="toggleOption('option14')">
+                                            <span class="option-icon">💡</span>
+                                            <span class="option-text">14.HyDE（假设文档嵌入）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option14' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option14'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">用户提问很短，且与文档词汇不匹配（零样本搜索）</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">知识库内容比较专业，但用户提问口语化的场景</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option15' }" @click="toggleOption('option15')">
+                                            <span class="option-icon">🔥</span>
+                                            <span class="option-text">15.Fusion（融合检索）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option15' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option15'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">需要结合向量检索的"语义"和关键词检索的"精确"时</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">混合查询（既含专有名词又含模糊意图）、多源异构数据</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option16' }" @click="toggleOption('option16')">
+                                            <span class="option-icon">✅</span>
+                                            <span class="option-text">16.CRAG（纠错型RAG）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option16' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option16'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">需要检测和纠正检索到的无关内容</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">存在大量相似内容需要过滤的场景</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="radio-option-wrapper">
+                                        <div class="radio-option" :class="{ 'is-selected': selectedOption === 'option17' }" @click="toggleOption('option17')">
+                                            <span class="option-icon">🖼️</span>
+                                            <span class="option-text">17.Multi-Modal RAG（多模态检索增强生成）</span>
+                                            <span class="option-arrow">{{ expandedOption === 'option17' ? '▲' : '▼' }}</span>
+                                        </div>
+                                        <div class="option-config" v-if="expandedOption === 'option17'">
+                                            <div class="option-suggestion">
+                                                <div class="option-suggestion-title">💡 优化建议</div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合场景：</span>
+                                                    <span class="option-suggestion-value">答案可能隐藏在图片、表格或视频中</span>
+                                                </div>
+                                                <div class="option-suggestion-row">
+                                                    <span class="option-suggestion-label">适合文档：</span>
+                                                    <span class="option-suggestion-value">带图论文、产品设计说明书、PPT 演示文稿</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

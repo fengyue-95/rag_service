@@ -3,3 +3,20 @@ uploads/
 
 # 索引文件目录
 indexes/
+
+# 环境变量文件（包含敏感信息）
+.env
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/

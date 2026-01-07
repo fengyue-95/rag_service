@@ -4,6 +4,7 @@ new Vue({
         return {
             uploadedFiles: [],
             selectedFiles: [],
+            selectAll: false,
             sidebarExpanded: true,
             currentPage: 'rag',
             showFilePanel: true,
@@ -65,6 +66,34 @@ new Vue({
             this.expandedOption = this.expandedOption === option ? null : option;
         },
         
+        copyFileName(fileName) {
+            navigator.clipboard.writeText(fileName).then(() => {
+                this.$message.success('文件名已复制到剪贴板');
+            }).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = fileName;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                this.$message.success('文件名已复制到剪贴板');
+            });
+        },
+        
+        handleSelectAll(val) {
+            if (val) {
+                this.selectedFiles = this.filteredFiles.map(f => f.name);
+            } else {
+                this.selectedFiles = [];
+            }
+        },
+        
+        handleFileSelectChange(val) {
+            const allNames = this.filteredFiles.map(f => f.name);
+            this.selectAll = allNames.length > 0 && val.length === allNames.length;
+        },
+        
         beforeUpload(file) {
             const allowedExtensions = ['.txt', '.md', '.csv', '.pdf', '.doc', '.docx', '.xls', '.xlsx'];
             const fileExt = '.' + file.name.split('.').pop().toLowerCase();
@@ -84,6 +113,8 @@ new Vue({
                 type: '.' + file.name.split('.').pop().toLowerCase()
             });
             this.addMessage('bot', `文件 "${file.name}" 上传成功！${response.content ? '内容已读取。' : ''}`);
+            this.selectAll = false;
+            this.selectedFiles = [];
         },
         
         handleUploadError(err, file, fileList) {
@@ -101,8 +132,10 @@ new Vue({
                 return;
             }
             
-            // 标记文件为已索引
-            fetch('/index/mark', {
+            this.$message.info('正在创建索引，请稍候...');
+            
+            // 创建向量索引
+            fetch('/index', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -110,9 +143,17 @@ new Vue({
                 body: JSON.stringify({ filenames: this.selectedFiles })
             }).then(response => {
                 if (response.ok) {
-                    this.$message.success(`已为 ${this.selectedFiles.length} 个文件创建索引`);
-                    this.loadUploadedFiles();
+                    return response.json();
                 }
+                throw new Error('索引创建失败');
+            }).then(result => {
+                if (result.failed_files && result.failed_files.length > 0) {
+                    const failedNames = result.failed_files.map(f => f.filename).join(', ');
+                    this.$message.warning(`部分文件索引失败: ${failedNames}`);
+                } else {
+                    this.$message.success(result.message);
+                }
+                this.loadUploadedFiles();
             }).catch(error => {
                 console.error('索引失败:', error);
                 this.$message.error('索引失败，请稍后再试');
@@ -194,6 +235,7 @@ new Vue({
                     
                     this.$message.success(msg);
                     this.selectedFiles = [];
+                    this.selectAll = false;
                     this.loadUploadedFiles();
                 } catch (error) {
                     console.error('删除文件失败:', error);
@@ -218,7 +260,10 @@ new Vue({
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({ 
+                        message,
+                        rag_method: this.selectedOption
+                    })
                 });
 
                 if (!response.ok) {
@@ -226,7 +271,19 @@ new Vue({
                 }
 
                 const result = await response.json();
-                this.addMessage('bot', result.message);
+                
+                // 构建带出处信息的回答
+                let fullContent = result.message;
+                if (result.sources && result.sources.length > 0) {
+                    const sourceText = result.source_type === 'local' 
+                        ? `📚 **出处**：${result.sources.join('、')}`
+                        : `🌐 **来源**：网络`;
+                    fullContent = `${result.message}\n\n${sourceText}`;
+                } else if (result.source_type === 'general') {
+                    fullContent = `${result.message}\n\n🌐 **来源**：通用知识`;
+                }
+                
+                this.addMessage('bot', fullContent);
             } catch (error) {
                 console.error('聊天错误:', error);
                 this.$message.error('抱歉，发生了错误，请稍后再试。');
@@ -283,7 +340,8 @@ new Vue({
                         type: file.type,
                         indexed: file.indexed || false
                     }));
-                    this.selectedFiles = []; // 清空选择
+                    this.selectedFiles = [];
+                    this.selectAll = false;
                 }
             } catch (error) {
                 console.error('加载文件列表失败:', error);
