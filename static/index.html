@@ -264,6 +264,7 @@
         .file-list-actions {
             display: flex;
             justify-content: center;
+            gap: 12px;
             padding: 16px 0;
             border-top: 1px solid #e4e7ed;
             margin-top: auto;
@@ -272,6 +273,8 @@
         .file-list-actions .el-button {
             width: 100px;
         }
+        
+        .file-icon {
             font-size: 24px;
             flex-shrink: 0;
             width: 32px;
@@ -332,6 +335,7 @@
                                 <div class="file-size">{{ formatFileSize(file.size) }}</div>
                             </div>
                             <el-tag type="success" size="small">已上传</el-tag>
+                            <el-tag v-if="file.indexed" type="warning" size="small">已索引</el-tag>
                         </div>
                     </el-checkbox-group>
                     <el-empty v-if="uploadedFiles.length === 0" description="暂无上传文件" :image-size="80"></el-empty>
@@ -339,6 +343,7 @@
 
                 <div class="file-list-actions">
                     <el-button type="primary" size="medium" @click="handleIndexClick">索引</el-button>
+                    <el-button type="warning" size="medium" @click="handleDeleteIndexClick" :disabled="selectedFiles.length === 0">删除索引</el-button>
                     <el-button type="danger" size="medium" @click="handleDeleteClick" :disabled="selectedFiles.length === 0">删除</el-button>
                 </div>
             </div>

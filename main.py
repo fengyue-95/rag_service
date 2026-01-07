@@ -20,6 +20,9 @@ app.add_middleware(
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+INDEX_DIR = Path("indexes")
+INDEX_DIR.mkdir(exist_ok=True)
+
 # 挂载静态文件目录（支持热更新）
 app.mount("/static", StaticFiles(directory="static", html=True), name="static")
 
@@ -155,13 +158,21 @@ async def chat(message: dict):
 @app.get("/uploads")
 async def list_uploads():
     """获取已上传的文件列表"""
+    # 获取已索引文件列表
+    indexed_files = set()
+    for index_file in INDEX_DIR.iterdir():
+        if index_file.is_file() and index_file.name.endswith('.index'):
+            filename = index_file.name[:-6]
+            indexed_files.add(filename)
+    
     files = []
     for file_path in UPLOAD_DIR.iterdir():
         if file_path.is_file():
             files.append({
                 "filename": file_path.name,
                 "size": file_path.stat().st_size,
-                "type": file_path.suffix
+                "type": file_path.suffix,
+                "indexed": file_path.name in indexed_files
             })
     return JSONResponse({"files": files})
 
@@ -191,33 +202,131 @@ async def delete_file(filename: str):
 
 @app.post("/uploads/delete")
 async def delete_files(request: dict):
-    """批量删除文件"""
+    """批量删除文件（先删除索引，再删除文件）"""
     filenames = request.get("filenames", [])
     
     if not filenames:
         raise HTTPException(status_code=400, detail="未指定要删除的文件")
     
-    deleted = []
-    failed = []
+    # 检查哪些文件存在索引文件
+    files_with_index = []
+    files_without_index = []
     
+    for filename in filenames:
+        index_file = INDEX_DIR / f"{filename}.index"
+        if index_file.exists():
+            files_with_index.append(filename)
+        else:
+            files_without_index.append(filename)
+    
+    deleted_files = []
+    deleted_indexes = []
+    failed_files = []
+    failed_indexes = []
+    
+    # 先删除索引文件
+    for filename in files_with_index:
+        index_file = INDEX_DIR / f"{filename}.index"
+        try:
+            index_file.unlink()
+            deleted_indexes.append(filename)
+            print(f"索引删除成功: {filename}")
+        except Exception as e:
+            failed_indexes.append(filename)
+            print(f"索引删除失败: {filename}, 错误: {str(e)}")
+    
+    # 再删除实际文件
     for filename in filenames:
         file_path = UPLOAD_DIR / filename
         try:
             if file_path.exists() and file_path.is_file():
                 file_path.unlink()
-                deleted.append(filename)
+                deleted_files.append(filename)
                 print(f"文件删除成功: {filename}")
             else:
-                failed.append(filename)
+                failed_files.append(filename)
         except Exception as e:
-            failed.append(filename)
+            failed_files.append(filename)
             print(f"文件删除失败: {filename}, 错误: {str(e)}")
     
     return JSONResponse({
-        "message": f"成功删除 {len(deleted)} 个文件",
-        "deleted": deleted,
-        "failed": failed
+        "message": f"成功删除 {len(deleted_files)} 个文件和 {len(deleted_indexes)} 个索引",
+        "deleted_files": deleted_files,
+        "deleted_indexes": deleted_indexes,
+        "failed_files": failed_files,
+        "failed_indexes": failed_indexes,
+        "files_with_index": files_with_index  # 返回有索引的文件列表用于前端提示
     })
+
+
+@app.post("/index/mark")
+async def mark_indexed(request: dict):
+    """标记文件已索引"""
+    filenames = request.get("filenames", [])
+    
+    if not filenames:
+        raise HTTPException(status_code=400, detail="未指定要标记的文件")
+    
+    marked = []
+    for filename in filenames:
+        index_file = INDEX_DIR / f"{filename}.index"
+        try:
+            index_file.touch()
+            marked.append(filename)
+            print(f"索引标记成功: {filename}")
+        except Exception as e:
+            print(f"索引标记失败: {filename}, 错误: {str(e)}")
+    
+    return JSONResponse({
+        "message": f"成功标记 {len(marked)} 个文件为已索引",
+        "marked": marked
+    })
+
+
+@app.post("/index/delete")
+async def delete_index(request: dict):
+    """删除索引文件"""
+    filenames = request.get("filenames", [])
+    
+    if not filenames:
+        raise HTTPException(status_code=400, detail="未指定要删除索引的文件")
+    
+    deleted = []
+    not_found = []
+    
+    for filename in filenames:
+        index_file = INDEX_DIR / f"{filename}.index"
+        try:
+            if index_file.exists():
+                index_file.unlink()
+                deleted.append(filename)
+                print(f"索引删除成功: {filename}")
+            else:
+                not_found.append(filename)
+        except Exception as e:
+            print(f"索引删除失败: {filename}, 错误: {str(e)}")
+    
+    if deleted:
+        message = f"成功删除 {len(deleted)} 个索引文件"
+    else:
+        message = "没有找到要删除的索引文件"
+    
+    return JSONResponse({
+        "message": message,
+        "deleted": deleted,
+        "not_found": not_found
+    })
+
+
+@app.get("/index/status")
+async def get_index_status():
+    """获取所有已索引文件的状态"""
+    indexed_files = []
+    for index_file in INDEX_DIR.iterdir():
+        if index_file.is_file() and index_file.name.endswith('.index'):
+            filename = index_file.name[:-6]  # 移除 .index 后缀
+            indexed_files.append(filename)
+    return JSONResponse({"indexed_files": indexed_files})
 
 
 if __name__ == "__main__":

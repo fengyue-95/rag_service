@@ -53,8 +53,49 @@ new Vue({
                 this.$message.warning('请先选择文件');
                 return;
             }
-            this.$message.success(`已选择 ${this.selectedFiles.length} 个文件`);
-            // TODO: 实现索引功能
+            
+            // 标记文件为已索引
+            fetch('/index/mark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filenames: this.selectedFiles })
+            }).then(response => {
+                if (response.ok) {
+                    this.$message.success(`已为 ${this.selectedFiles.length} 个文件创建索引`);
+                    this.loadUploadedFiles();
+                }
+            }).catch(error => {
+                console.error('索引失败:', error);
+                this.$message.error('索引失败，请稍后再试');
+            });
+        },
+        
+        handleDeleteIndexClick() {
+            if (this.selectedFiles.length === 0) {
+                this.$message.warning('请先选择要删除索引的文件');
+                return;
+            }
+            
+            fetch('/index/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filenames: this.selectedFiles })
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('删除索引失败');
+            }).then(result => {
+                this.$message.success(result.message);
+                this.loadUploadedFiles();
+            }).catch(error => {
+                console.error('删除索引失败:', error);
+                this.$message.error('删除索引失败，请稍后再试');
+            });
         },
         
         handleDeleteClick() {
@@ -63,10 +104,22 @@ new Vue({
                 return;
             }
             
-            this.$confirm(`确定要删除选中的 ${this.selectedFiles.length} 个文件吗?`, '确认删除', {
+            // 先检查哪些文件存在索引
+            const filesWithIndex = this.uploadedFiles
+                .filter(f => this.selectedFiles.includes(f.name) && f.indexed)
+                .map(f => f.name);
+            
+            let confirmMessage = `确定要删除选中的 ${this.selectedFiles.length} 个文件吗？`;
+            if (filesWithIndex.length > 0) {
+                confirmMessage += `<br><br><span style="color: #E6A23C;">注意：以下 ${filesWithIndex.length} 个文件存在索引，将同时删除：</span><br>${filesWithIndex.join('<br>')}`;
+            }
+            
+            this.$confirm(confirmMessage, '确认删除', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
-                type: 'warning'
+                type: filesWithIndex.length > 0 ? 'warning' : 'danger',
+                dangerouslyUseHTMLString: true,
+                distinguishCancelAndClose: true
             }).then(async () => {
                 try {
                     const response = await fetch('/uploads/delete', {
@@ -82,7 +135,17 @@ new Vue({
                     }
                     
                     const result = await response.json();
-                    this.$message.success(result.message);
+                    
+                    // 构建成功消息
+                    let msg = result.message;
+                    if (result.deleted_indexes && result.deleted_indexes.length > 0) {
+                        msg += `，索引: ${result.deleted_indexes.join(', ')}`;
+                    }
+                    if (result.deleted_files && result.deleted_files.length > 0) {
+                        msg += `，文件: ${result.deleted_files.join(', ')}`;
+                    }
+                    
+                    this.$message.success(msg);
                     this.selectedFiles = [];
                     this.loadUploadedFiles();
                 } catch (error) {
@@ -170,7 +233,8 @@ new Vue({
                     this.uploadedFiles = result.files.map(file => ({
                         name: file.filename,
                         size: file.size,
-                        type: file.type
+                        type: file.type,
+                        indexed: file.indexed || false
                     }));
                     this.selectedFiles = []; // 清空选择
                 }
