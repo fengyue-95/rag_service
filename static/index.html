@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .left-panel {
+            width: 20%;
+            min-width: 400px;
+            background: white;
+            border-right: 1px solid #e4e7ed;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .logo-area {
+            text-align: center;
+            padding: 16px 20px;
+            border: 2px dashed #409eff;
+            border-radius: 4px;
+            color: #409eff;
+            font-weight: 600;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .upload-section {
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            gap: 16px;
+        }
+
+        .upload-section .el-upload {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-section .el-button {
+            width: 200px;
+            height: 50px;
+            font-size: 16px;
+            display: inline-block !important;
+        }
+
+        .upload-section .el-upload-dragger {
+            display: none;
+        }
+
+        .upload-section .el-upload__tip {
+            text-align: center;
+            color: #909399;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .upload-demo .el-upload {
+            display: block;
+        }
+
+        .upload-demo .el-upload-list {
+            display: none;
+        }
+
+        .file-list {
+            min-height: 300px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            border-color: #409eff;
+            box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
+        }
+
+        .file-item.is-selected {
+            border-color: #409eff;
+            background-color: #ecf5ff;
+        }
+
+        .file-checkbox {
+            flex-shrink: 0;
+        }
+
+        .file-list-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #409eff;
+        }
+
+        .right-panel {
+            flex: 1;
+            /*padding: 24px;*/
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-box {
+            flex: 1;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fff;
+            min-height: 0;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #409eff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .message.user .avatar {
+            background: #67c23a;
+        }
+
+        .message-content {
+            max-width: 70%;
+            min-width: 200px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #606266;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            word-break: keep-all;
+        }
+
+        .message.bot .message-content {
+            background: #f4f4f5;
+            border-left: 3px solid #409eff;
+        }
+
+        .message.user .message-content {
+            background: #409eff;
+            color: white;
+            border-right: 3px solid #409eff;
+        }
+
+        .username {
+            font-size: 12px;
+            color: #909399;
+            margin-bottom: 4px;
+        }
+
+        .message-info {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+            min-width: 200px;
+        }
+
+        .message.user .message-info {
+            align-items: flex-end;
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid #e4e7ed;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper .el-textarea {
+            flex: 1;
+        }
+
+        .input-wrapper .el-button {
+            flex-shrink: 0;
+            height: 76px;
+            padding: 0 24px;
+        }
+
+        .file-item:hover {
+            border-color: #409eff;
+            box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.2);
+        }
+
+        .file-item.is-selected {
+            border-color: #409eff;
+            background-color: #ecf5ff;
+        }
+
+        .file-checkbox {
+            flex-shrink: 0;
+        }
+
+        .file-list-actions {
+            display: flex;
+            justify-content: center;
+            padding: 16px 0;
+            border-top: 1px solid #e4e7ed;
+            margin-top: auto;
+        }
+
+        .file-list-actions .el-button {
+            width: 100px;
+        }
+            font-size: 24px;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #303133;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 4px;
+        }
+
+        .drawer-toggle-btn {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            padding: 8px 12px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: left 0.3s;
+        }
+
+        .drawer-toggle-btn:hover {
+            background: #66b1ff;
+        }
+
+        .left-panel.is-collapsed {
+            margin-left: 0;
+        }
+
+        .tag-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .tag-item:hover {
+            background: #f5f7fa;
+        }
+
+        .tag-item.is-active {
+            background: #ecf5ff;
+            border-left-color: #409eff;
+            color: #409eff;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 抽屉切换按钮 -->
+        <el-button class="drawer-toggle-btn" icon="el-icon-menu" @click="drawerVisible = !drawerVisible"></el-button>
+        
+        <!-- 左侧抽屉 -->
+        <el-drawer title="导航" v-model="drawerVisible" direction="ltr" size="200px">
+            <div class="tag-list">
+                <div class="tag-item" :class="{ 'is-active': currentTag === 'tag1' }" @click="switchTag('tag1')">
+                    标签1
+                </div>
+                <div class="tag-item" :class="{ 'is-active': currentTag === 'tag2' }" @click="switchTag('tag2')">
+                    标签2
+                </div>
+            </div>
+        </el-drawer>
+        
+        <div class="container">
+            <!-- 左侧功能区域 -->
+            <div class="left-panel">
+                <div class="logo-area">RAG/index</div>
+                
+                <div class="upload-section">
+                    <el-upload
+                        class="upload-demo"
+                        action="/upload"
+                        :on-success="handleUploadSuccess"
+                        :on-error="handleUploadError"
+                        :before-upload="beforeUpload"
+                        :show-file-list="false">
+                        <el-button type="primary" icon="el-icon-upload2" size="large">点击上传文件</el-button>
+                        <div slot="tip" class="el-upload__tip">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
+                    </el-upload>
+                </div>
+                <div class="file-list">
+                    <div class="file-list-title">已上传文件</div>
+                    <el-checkbox-group v-model="selectedFiles" @change="handleFileSelectChange">
+                        <div v-for="(file, index) in uploadedFiles" :key="file.name" class="file-item" :class="{ 'is-selected': selectedFiles.includes(file.name) }">
+                            <el-checkbox :label="file.name" class="file-checkbox">{{ index + 1 }}</el-checkbox>
+                            <div class="file-icon">{{ getFileIcon(file.type) }}</div>
+                            <div class="file-info">
+                                <div class="file-name">{{ file.name }}</div>
+                                <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                            </div>
+                            <el-tag type="success" size="small">已上传</el-tag>
+                        </div>
+                    </el-checkbox-group>
+                    <el-empty v-if="uploadedFiles.length === 0" description="暂无上传文件" :image-size="80"></el-empty>
+                </div>
+
+                <div class="file-list-actions">
+                    <el-button type="primary" size="medium" @click="handleIndexClick">索引</el-button>
+                </div>
+            </div>
+
+            <!-- 右侧对话框区域 -->
+            <div class="right-panel">
+                <div class="chat-box">
+                    <div class="chat-messages" ref="chatMessages">
+                        <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.type">
+                           <div class="avatar">{{ msg.type === 'bot' ? '🤖' : '👤' }}</div>
+                            <div class="message-info">
+                                <div class="username">{{ msg.type === 'bot' ? '小助手' : '我' }}</div>
+                                <div class="message-content">{{ msg.content }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="input-wrapper">
+                            <el-input
+                                type="textarea"
+                                :rows="3"
+                                placeholder="输入你的消息..."
+                                v-model="inputMessage"
+                                @keydown.ctrl.enter="sendMessage"
+                                resize="none">
+                            </el-input>
+                            <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px; align-self: flex-end;">发送</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
