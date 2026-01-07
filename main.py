@@ -166,6 +166,60 @@ async def list_uploads():
     return JSONResponse({"files": files})
 
 
+@app.delete("/uploads/{filename}")
+async def delete_file(filename: str):
+    """删除指定文件"""
+    file_path = UPLOAD_DIR / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"文件不存在: {filename}")
+    
+    if not file_path.is_file():
+        raise HTTPException(status_code=400, detail=f"不是文件: {filename}")
+    
+    try:
+        file_path.unlink()
+        print(f"文件删除成功: {filename}")
+        return JSONResponse({
+            "message": "文件删除成功",
+            "filename": filename
+        })
+    except Exception as e:
+        print(f"文件删除失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"文件删除失败: {str(e)}")
+
+
+@app.post("/uploads/delete")
+async def delete_files(request: dict):
+    """批量删除文件"""
+    filenames = request.get("filenames", [])
+    
+    if not filenames:
+        raise HTTPException(status_code=400, detail="未指定要删除的文件")
+    
+    deleted = []
+    failed = []
+    
+    for filename in filenames:
+        file_path = UPLOAD_DIR / filename
+        try:
+            if file_path.exists() and file_path.is_file():
+                file_path.unlink()
+                deleted.append(filename)
+                print(f"文件删除成功: {filename}")
+            else:
+                failed.append(filename)
+        except Exception as e:
+            failed.append(filename)
+            print(f"文件删除失败: {filename}, 错误: {str(e)}")
+    
+    return JSONResponse({
+        "message": f"成功删除 {len(deleted)} 个文件",
+        "deleted": deleted,
+        "failed": failed
+    })
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

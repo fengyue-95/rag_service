@@ -4,8 +4,6 @@ new Vue({
         return {
             uploadedFiles: [],
             selectedFiles: [],
-            drawerVisible: false,
-            currentTag: 'tag1',
             messages: [
                 {
                     type: 'bot',
@@ -57,6 +55,43 @@ new Vue({
             }
             this.$message.success(`已选择 ${this.selectedFiles.length} 个文件`);
             // TODO: 实现索引功能
+        },
+        
+        handleDeleteClick() {
+            if (this.selectedFiles.length === 0) {
+                this.$message.warning('请先选择要删除的文件');
+                return;
+            }
+            
+            this.$confirm(`确定要删除选中的 ${this.selectedFiles.length} 个文件吗?`, '确认删除', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(async () => {
+                try {
+                    const response = await fetch('/uploads/delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ filenames: this.selectedFiles })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('删除失败');
+                    }
+                    
+                    const result = await response.json();
+                    this.$message.success(result.message);
+                    this.selectedFiles = [];
+                    this.loadUploadedFiles();
+                } catch (error) {
+                    console.error('删除文件失败:', error);
+                    this.$message.error('删除文件失败，请稍后再试');
+                }
+            }).catch(() => {
+                // 用户取消
+            });
         },
         
         async sendMessage() {
@@ -141,18 +176,6 @@ new Vue({
                 }
             } catch (error) {
                 console.error('加载文件列表失败:', error);
-            }
-        },
-        
-        switchTag(tag) {
-            this.currentTag = tag;
-            this.drawerVisible = false;
-            if (tag === 'tag1') {
-                // 标签1 - 当前页面
-                this.$message.info('当前在标签1页面');
-            } else if (tag === 'tag2') {
-                // 标签2 - 后续实现
-                this.$message.info('标签2功能开发中');
             }
         }
     }

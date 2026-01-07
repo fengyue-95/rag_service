@@ -300,65 +300,10 @@
             color: #909399;
             margin-top: 4px;
         }
-
-        .drawer-toggle-btn {
-            position: fixed;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1000;
-            padding: 8px 12px;
-            background: #409eff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: left 0.3s;
-        }
-
-        .drawer-toggle-btn:hover {
-            background: #66b1ff;
-        }
-
-        .left-panel.is-collapsed {
-            margin-left: 0;
-        }
-
-        .tag-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 3px solid transparent;
-        }
-
-        .tag-item:hover {
-            background: #f5f7fa;
-        }
-
-        .tag-item.is-active {
-            background: #ecf5ff;
-            border-left-color: #409eff;
-            color: #409eff;
-        }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- 抽屉切换按钮 -->
-        <el-button class="drawer-toggle-btn" icon="el-icon-menu" @click="drawerVisible = !drawerVisible"></el-button>
-        
-        <!-- 左侧抽屉 -->
-        <el-drawer title="导航" v-model="drawerVisible" direction="ltr" size="200px">
-            <div class="tag-list">
-                <div class="tag-item" :class="{ 'is-active': currentTag === 'tag1' }" @click="switchTag('tag1')">
-                    标签1
-                </div>
-                <div class="tag-item" :class="{ 'is-active': currentTag === 'tag2' }" @click="switchTag('tag2')">
-                    标签2
-                </div>
-            </div>
-        </el-drawer>
-        
         <div class="container">
             <!-- 左侧功能区域 -->
             <div class="left-panel">
@@ -394,6 +339,7 @@
 
                 <div class="file-list-actions">
                     <el-button type="primary" size="medium" @click="handleIndexClick">索引</el-button>
+                    <el-button type="danger" size="medium" @click="handleDeleteClick" :disabled="selectedFiles.length === 0">删除</el-button>
                 </div>
             </div>
 
