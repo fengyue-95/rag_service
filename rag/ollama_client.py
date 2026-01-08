@@ -181,6 +181,58 @@ class ChatModel:
                     
         except Exception as e:
             print(f"流式对话失败: {str(e)}")
+    
+    def polish(self, text: str) -> str:
+        """润色文本，使其更流畅自然
+        
+        Args:
+            text: 原始文本
+        
+        Returns:
+            润色后的文本
+        """
+        try:
+            prompt = f"""请对以下文本进行润色，使其语言更流畅自然，表达更准确专业。
+
+要求：
+1. 保持原意不变
+2. 语言更流畅自然
+3. 修正语法和表达错误
+4. 适当优化句式结构
+
+原文：
+{text}
+
+润色后的文本："""
+
+            payload = {
+                "model": self.model_name,
+                "messages": [
+                    {"role": "system", "content": "你是一个专业的文字润色助手，请用中文润色文本，保持原意，使语言更流畅自然。"},
+                    {"role": "user", "content": prompt}
+                ],
+                "stream": False
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/api/chat",
+                json=payload,
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                polished = data.get("message", {}).get("content", "")
+                # 如果润色结果太短或为空，返回原文
+                if polished and len(polished.strip()) > 10:
+                    return polished.strip()
+                return text
+            else:
+                print(f"润色失败: {response.text}")
+                return text
+        except Exception as e:
+            print(f"润色请求失败: {str(e)}")
+            return text
 
 
 class OCRModel:

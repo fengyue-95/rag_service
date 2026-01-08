@@ -11,6 +11,7 @@ new Vue({
             selectedOption: 'option1',
             expandedOption: 'option1',
             fileSearch: '',
+            polishEnabled: false,  // 是否启用润色功能
             ragConfigs: {
                 option1: '',
                 option2: '',
@@ -262,7 +263,8 @@ new Vue({
                     },
                     body: JSON.stringify({ 
                         message,
-                        rag_method: this.selectedOption
+                        rag_method: this.selectedOption,
+                        polish: this.polishEnabled
                     })
                 });
 

@@ -293,6 +293,20 @@ body {
     cursor: not-allowed;
 }
 
+/* 润色开关样式 */
+.input-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 /* 滚动条样式 */
 ::-webkit-scrollbar {
     width: 8px;

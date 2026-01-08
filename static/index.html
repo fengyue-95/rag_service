@@ -148,8 +148,8 @@
 
         /* 文件管理面板 */
         .file-panel {
-            width: 320px;
-            min-width: 320px;
+            width: 400px;
+            min-width: 400px;
             background: white;
             border-right: 1px solid #e4e7ed;
             padding: 20px;
@@ -783,7 +783,12 @@
                                         @keydown.ctrl.enter="sendMessage"
                                         resize="none">
                                     </el-input>
-                                    <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px; align-self: flex-end;">发送</el-button>
+                                    <div class="input-actions">
+                                        <el-checkbox v-model="polishEnabled" style="margin-right: 12px;">
+                                            ✨ 润色回答
+                                        </el-checkbox>
+                                        <el-button type="primary" @click="sendMessage" :loading="sending" style="height: 40px;">发送</el-button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

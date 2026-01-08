@@ -222,6 +222,90 @@ class VectorStore:
         # 实际应用中可能需要重建索引
         print("删除操作需要重建索引，暂时不支持")
     
+    def delete_documents_by_source(self, source: str, store_name: str = "default"):
+        """按来源删除文档
+        
+        Args:
+            source: 来源文件名
+            store_name: 存储名称
+        """
+        if self._index is None:
+            self._load_index()
+        
+        if self._index is None:
+            return False
+        
+        # 找出要删除的文档索引
+        ids_to_delete = []
+        new_documents = []
+        new_metadatas = []
+        id_mapping = {}  # 旧ID -> 新ID
+        
+        for i, meta in enumerate(self._metadatas):
+            if meta.get("source") == source:
+                ids_to_delete.append(i)
+            else:
+                new_id = len(new_documents)
+                id_mapping[i] = new_id
+                new_documents.append(self._documents[i])
+                new_metadatas.append(meta)
+        
+        if not ids_to_delete:
+            print(f"未找到来源为 {source} 的文档")
+            return False
+        
+        print(f"需要删除 {len(ids_to_delete)} 个文档块，剩余 {len(new_documents)} 个")
+        
+        # 重建索引
+        try:
+            import faiss
+            
+            # 获取向量维度
+            dimension = self._index.d
+            
+            # 创建新索引
+            new_index = faiss.IndexIDMap(faiss.IndexFlatIP(dimension))
+            
+            # 重新添加文档（使用新的连续ID）
+            if new_documents:
+                # 生成嵌入
+                embeddings = self.embedding_model.embed_batch(new_documents)
+                
+                if not embeddings:
+                    print("生成嵌入失败，尝试逐个生成...")
+                    embeddings = []
+                    for doc in new_documents:
+                        emb = self.embedding_model.embed(doc)
+                        if emb:
+                            embeddings.append(emb)
+                
+                if embeddings:
+                    embeddings_array = np.array(embeddings).astype('float32')
+                    faiss.normalize_L2(embeddings_array)
+                    
+                    # 添加到新索引
+                    new_ids = np.array(list(id_mapping.values()))
+                    new_index.add_with_ids(embeddings_array, new_ids)
+                else:
+                    print("警告: 无法生成嵌入，索引将不包含向量")
+            
+            # 更新内部状态
+            self._index = new_index
+            self._documents = new_documents
+            self._metadatas = new_metadatas
+            
+            # 保存索引
+            self.save_index(store_name)
+            
+            print(f"成功删除来源为 {source} 的 {len(ids_to_delete)} 个文档块")
+            return True
+            
+        except Exception as e:
+            import traceback
+            print(f"删除文档失败: {str(e)}")
+            traceback.print_exc()
+            return False
+    
     def clear(self, store_name: str = "default"):
         """清空索引"""
         self._index = None

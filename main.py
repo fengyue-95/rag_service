@@ -96,6 +96,7 @@ async def chat(message: dict):
     """聊天接口，支持 17 种 RAG 方法"""
     user_message = message.get("message", "")
     rag_method = message.get("rag_method", "option1")  # 默认 SimpleRAG
+    polish = message.get("polish", False)  # 是否润色回答
     
     if not user_message:
         raise HTTPException(status_code=400, detail="消息内容不能为空")
@@ -109,7 +110,7 @@ async def chat(message: dict):
     
     # 调用 RAG 方法生成回答
     try:
-        result = rag.chat(user_message, vector_store)
+        result = rag.chat(user_message, vector_store, polish=polish)
         
         # 处理新格式的返回（dict）
         if isinstance(result, dict):
@@ -216,21 +217,31 @@ async def delete_index(request: dict):
     not_found = []
     
     for filename in filenames:
+        # 删除索引标记文件
         index_file = INDEX_DIR / f"{filename}.index"
+        index_existed = index_file.exists()
+        
         try:
-            if index_file.exists():
+            if index_existed:
                 index_file.unlink()
+            
+            # 从向量存储中删除该文件的文档
+            success = vector_store.delete_documents_by_source(filename)
+            
+            if index_existed or success:
                 deleted.append(filename)
                 print(f"索引删除成功: {filename}")
             else:
                 not_found.append(filename)
+                
         except Exception as e:
             print(f"索引删除失败: {filename}, 错误: {str(e)}")
+            not_found.append(filename)
     
     if deleted:
-        message = f"成功删除 {len(deleted)} 个索引文件"
+        message = f"成功删除 {len(deleted)} 个文件的索引"
     else:
-        message = "没有找到要删除的索引文件"
+        message = "没有找到要删除的索引"
     
     return JSONResponse({
         "message": message,
@@ -331,7 +342,10 @@ async def delete_files(request: dict):
         index_file = INDEX_DIR / f"{filename}.index"
         
         try:
-            # 先删除索引文件
+            # 先从向量存储中删除该文件的文档
+            vector_store.delete_documents_by_source(filename)
+            
+            # 删除索引标记文件
             if index_file.exists():
                 index_file.unlink()
                 print(f"索引删除成功: {filename}")

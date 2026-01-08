@@ -27,7 +27,7 @@ class BaseRAGMethod:
         """生成回答"""
         return self.chat_model.chat(query, context=context)
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """完整的 RAG 流程，返回包含内容和出处的字典"""
         docs = self.retrieve(query, vector_store)
         sources = []
@@ -46,6 +46,9 @@ class BaseRAGMethod:
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            # 润色回答
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": unique_sources,
@@ -53,11 +56,28 @@ class BaseRAGMethod:
             }
         # 没有检索到本地文档，使用纯对话
         response = self.generate(query, "")
+        # 润色回答
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
             "source_type": "general"
         }
+    
+    def _polish_response(self, response: str) -> str:
+        """润色回答"""
+        if not response or len(response.strip()) < 10:
+            return response
+        
+        try:
+            polished = self.chat_model.polish(response)
+            if polished and len(polished.strip()) > 10:
+                return polished
+            return response
+        except Exception as e:
+            print(f"润色失败: {str(e)}")
+            return response
 
 
 class SimpleRAG(BaseRAGMethod):
@@ -65,7 +85,7 @@ class SimpleRAG(BaseRAGMethod):
     name = "simple"
     description = "简单切块"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """简单 RAG：检索 + 生成"""
         docs = self.retrieve(query, vector_store, k=5)
         sources = []
@@ -77,12 +97,16 @@ class SimpleRAG(BaseRAGMethod):
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -95,7 +119,7 @@ class SemanticChunking(BaseRAGMethod):
     name = "semantic_chunking"
     description = "语义切块"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """语义切块 RAG"""
         docs = self.retrieve(query, vector_store, k=8)
         sources = []
@@ -107,12 +131,16 @@ class SemanticChunking(BaseRAGMethod):
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -132,7 +160,7 @@ class ContextEnrichedRetrieval(BaseRAGMethod):
         # 这里可以添加上下文扩展逻辑
         return docs
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """上下文增强 RAG"""
         docs = self.retrieve(query, vector_store, k=5)
         sources = []
@@ -144,12 +172,16 @@ class ContextEnrichedRetrieval(BaseRAGMethod):
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -162,7 +194,7 @@ class ContextualChunkHeaders(BaseRAGMethod):
     name = "chunk_headers"
     description = "上下文分块标题"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """带标题的上下文 RAG"""
         docs = self.retrieve(query, vector_store, k=6)
         sources = []
@@ -179,12 +211,16 @@ class ContextualChunkHeaders(BaseRAGMethod):
                 context_parts.append(f"[来源: {source}]\n{doc}")
             context = "\n\n".join(context_parts)
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -197,7 +233,7 @@ class DocumentAugmentation(BaseRAGMethod):
     name = "doc_augmentation"
     description = "文档增强"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """文档增强 RAG：增加文档补充信息"""
         docs = self.retrieve(query, vector_store, k=5)
         sources = []
@@ -210,12 +246,16 @@ class DocumentAugmentation(BaseRAGMethod):
             # 合并相关文档片段
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -245,7 +285,7 @@ class QueryTransformation(BaseRAGMethod):
                 variants.append(line)
         return variants[:4]  # 最多返回 4 个版本
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """查询转换 RAG"""
         # 转换查询
         query_variants = self.transform_query(query)
@@ -273,6 +313,8 @@ class QueryTransformation(BaseRAGMethod):
             
             context = "\n\n".join([doc[0] for doc in unique_docs[:5]])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
@@ -280,6 +322,8 @@ class QueryTransformation(BaseRAGMethod):
             }
         
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -292,7 +336,7 @@ class Reranker(BaseRAGMethod):
     name = "reranker"
     description = "重排序"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """重排序 RAG：先粗筛再精排"""
         # 第一步：大规模检索
         docs = self.retrieve(query, vector_store, k=20)
@@ -304,6 +348,8 @@ class Reranker(BaseRAGMethod):
         
         if not docs:
             response = self.generate(query, "")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": [],
@@ -315,6 +361,8 @@ class Reranker(BaseRAGMethod):
         
         context = "\n\n".join([doc[0] for doc in top_docs])
         response = self.generate(query, context)
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": sources,
@@ -336,7 +384,7 @@ class RSERetrieval(BaseRAGMethod):
         prompt = f"为以下问题扩展相关概念和关键词（用于信息检索）：\n{query}"
         return self.reasoning_model.reason(prompt)
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """语义扩展重排序 RAG"""
         # 扩展查询
         expanded_query = self.expand_query(query)
@@ -354,6 +402,8 @@ class RSERetrieval(BaseRAGMethod):
             top_docs = docs[:5]
             context = "\n\n".join([doc[0] for doc in top_docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
@@ -361,6 +411,8 @@ class RSERetrieval(BaseRAGMethod):
             }
         
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -373,7 +425,7 @@ class FeedbackLoop(BaseRAGMethod):
     name = "feedback_loop"
     description = "反馈闭环"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """反馈闭环 RAG：迭代优化"""
         # 初始检索
         docs = self.retrieve(query, vector_store, k=5)
@@ -385,6 +437,8 @@ class FeedbackLoop(BaseRAGMethod):
         
         if not docs:
             response = self.generate(query, "")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": [],
@@ -394,6 +448,8 @@ class FeedbackLoop(BaseRAGMethod):
         # 生成初始回答
         context = "\n\n".join([doc[0] for doc in docs])
         response = self.generate(query, context)
+        if polish:
+            response = self._polish_response(response)
         
         return {
             "content": response,
@@ -407,7 +463,7 @@ class AdaptiveRAG(BaseRAGMethod):
     name = "adaptive_rag"
     description = "自适应检索增强生成"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """自适应 RAG：根据问题类型选择策略"""
         # 分析问题类型
         question_type = self._classify_question(query)
@@ -423,6 +479,8 @@ class AdaptiveRAG(BaseRAGMethod):
             context = "\n\n".join([doc[0] for doc in docs]) if docs else ""
             if docs:
                 response = self.generate(query, context)
+                if polish:
+                    response = self._polish_response(response)
                 return {
                     "content": response,
                     "sources": sources,
@@ -438,6 +496,8 @@ class AdaptiveRAG(BaseRAGMethod):
             context = "\n\n".join([doc[0] for doc in docs]) if docs else ""
             if docs:
                 response = self.generate(query, context)
+                if polish:
+                    response = self._polish_response(response)
                 return {
                     "content": response,
                     "sources": sources,
@@ -445,14 +505,8 @@ class AdaptiveRAG(BaseRAGMethod):
                 }
         
         # 默认策略
-        result = super().chat(query, vector_store)
-        if isinstance(result, dict):
-            return result
-        return {
-            "content": result,
-            "sources": [],
-            "source_type": "general"
-        }
+        result = super().chat(query, vector_store, polish=polish)
+        return result
     
     def _classify_question(self, query: str) -> str:
         """简单问题分类"""
@@ -487,10 +541,10 @@ class SelfRAG(BaseRAGMethod):
         result = self.reasoning_model.reason(prompt)
         return "需要改进" not in result
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """自反思 RAG"""
         # 初始回答
-        response = super().chat(query, vector_store)
+        response = super().chat(query, vector_store, polish=polish)
         
         if isinstance(response, dict):
             response_data = response
@@ -501,11 +555,7 @@ class SelfRAG(BaseRAGMethod):
         
         # 反思
         if self.reflect(query, response_data["content"]):
-            return response_data if isinstance(response, dict) else {
-                "content": response,
-                "sources": sources,
-                "source_type": "local" if sources else "general"
-            }
+            return response_data
         else:
             # 尝试改进：检索更多文档
             docs = self.retrieve(query, vector_store, k=10)
@@ -517,16 +567,16 @@ class SelfRAG(BaseRAGMethod):
             if docs:
                 context = "\n\n".join([doc[0] for doc in docs])
                 improved_response = self.generate(query, context)
+                if polish:
+                    improved_response = self._polish_response(improved_response)
                 return {
                     "content": improved_response,
                     "sources": new_sources,
                     "source_type": "local"
                 }
-        return response_data if isinstance(response, dict) else {
-            "content": response,
-            "sources": sources,
-            "source_type": "local" if sources else "general"
-        }
+        if polish:
+            response_data["content"] = self._polish_response(response_data["content"])
+        return response_data
 
 
 class KnowledgeGraph(BaseRAGMethod):
@@ -534,7 +584,7 @@ class KnowledgeGraph(BaseRAGMethod):
     name = "knowledge_graph"
     description = "知识图谱"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """知识图谱 RAG"""
         # 检索实体相关文档
         docs = self.retrieve(query, vector_store, k=6)
@@ -549,12 +599,16 @@ class KnowledgeGraph(BaseRAGMethod):
             # 在提示中强调关系和实体
             enhanced_prompt = f"请根据以下文档内容，梳理其中的实体和关系后回答问题：\n\n{context}\n\n问题：{query}"
             response = self.chat_model.chat(enhanced_prompt, context="")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -567,7 +621,7 @@ class HierarchicalIndices(BaseRAGMethod):
     name = "hierarchical"
     description = "层次化索引"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """层次化索引 RAG"""
         # 先检索摘要级别的文档
         # 然后检索详细内容
@@ -582,12 +636,16 @@ class HierarchicalIndices(BaseRAGMethod):
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -609,7 +667,7 @@ class HyDE(BaseRAGMethod):
         prompt = f"针对以下问题，生成一个详细的假设性答案（不需要真实，基于常识）：\n\n问题：{query}"
         return self.reasoning_model.reason(prompt)
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """HyDE RAG：使用假设文档检索"""
         # 生成假设答案
         hyp_answer = self.generate_hypothetical_answer(query)
@@ -625,12 +683,16 @@ class HyDE(BaseRAGMethod):
         if docs:
             context = "\n\n".join([doc[0] for doc in docs])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -643,7 +705,7 @@ class FusionRetrieval(BaseRAGMethod):
     name = "fusion"
     description = "融合检索"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """融合检索 RAG"""
         # 多策略检索融合
         strategies = [
@@ -673,6 +735,8 @@ class FusionRetrieval(BaseRAGMethod):
             
             context = "\n\n".join([doc[0] for doc in unique_docs[:5]])
             response = self.generate(query, context)
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
@@ -680,6 +744,8 @@ class FusionRetrieval(BaseRAGMethod):
             }
         
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
@@ -710,7 +776,7 @@ class CRAG(BaseRAGMethod):
         is_relevant = "相关" in result and "不相关" not in result
         return is_relevant, result
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """CRAG：基于置信度的检索增强"""
         # 初始检索
         docs = self.retrieve(query, vector_store, k=5)
@@ -722,6 +788,8 @@ class CRAG(BaseRAGMethod):
         
         if not docs:
             response = self.generate(query, "")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": [],
@@ -734,6 +802,8 @@ class CRAG(BaseRAGMethod):
         if sum(relevance_scores) / len(relevance_scores) < 0.5:
             # 检索结果不相关，回退到纯生成
             response = self.generate(query, "")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": [],
@@ -745,6 +815,8 @@ class CRAG(BaseRAGMethod):
         
         if not relevant_docs:
             response = self.generate(query, "")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": [],
@@ -753,6 +825,8 @@ class CRAG(BaseRAGMethod):
         
         context = "\n\n".join([doc[0] for doc in relevant_docs])
         response = self.generate(query, context)
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": sources,
@@ -765,7 +839,7 @@ class MultiModalRAG(BaseRAGMethod):
     name = "multimodal"
     description = "多模态检索增强生成"
     
-    def chat(self, query: str, vector_store) -> Dict[str, Union[str, List]]:
+    def chat(self, query: str, vector_store, polish: bool = False) -> Dict[str, Union[str, List]]:
         """多模态 RAG"""
         # 检索文本相关文档
         docs = self.retrieve(query, vector_store, k=5)
@@ -788,12 +862,16 @@ class MultiModalRAG(BaseRAGMethod):
 注意：如果需要查看原始文件内容（如图片、表格等），请在回答中说明"建议查看源文档获取完整信息"。
 """
             response = self.chat_model.chat(multimodal_prompt, context="")
+            if polish:
+                response = self._polish_response(response)
             return {
                 "content": response,
                 "sources": sources,
                 "source_type": "local"
             }
         response = self.generate(query, "")
+        if polish:
+            response = self._polish_response(response)
         return {
             "content": response,
             "sources": [],
