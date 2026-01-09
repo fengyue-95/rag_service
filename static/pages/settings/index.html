@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/settings/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="settings-container">
+            <div class="page-header">
+                <h1>⚙️ 系统设置</h1>
+            </div>
+
+            <div class="settings-content">
+                <!-- API 设置 -->
+                <el-card class="settings-card">
+                    <div slot="header" class="card-header">
+                        <span>🔑 API 设置</span>
+                        <el-tag type="success" size="small" v-if="apiStatus === 'connected'">已连接</el-tag>
+                        <el-tag type="danger" size="small" v-else>未连接</el-tag>
+                    </div>
+                    <el-form label-position="top" size="small">
+                        <el-form-item label="API 类型">
+                            <el-select v-model="settings.apiType" class="full-width">
+                                <el-option label="DeepSeek" value="deepseek"></el-option>
+                                <el-option label="Ollama" value="ollama"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="API Key" v-if="settings.apiType === 'deepseek'">
+                            <el-input v-model="settings.apiKey" type="password" show-password placeholder="输入 DeepSeek API Key"></el-input>
+                        </el-form-item>
+                        <el-form-item label="Ollama 地址" v-if="settings.apiType === 'ollama'">
+                            <el-input v-model="settings.ollamaUrl" placeholder="http://localhost:11434"></el-input>
+                        </el-form-item>
+                        <el-form-item label="模型名称">
+                            <el-input v-model="settings.modelName" placeholder="deepseek-chat / llama3.2"></el-input>
+                        </el-form-item>
+                        <el-button type="primary" @click="testApiConnection" :loading="testingApi">
+                            {{ testingApi ? '测试中...' : '测试连接' }}
+                        </el-button>
+                    </el-form>
+                </el-card>
+
+                <!-- 索引设置 -->
+                <el-card class="settings-card">
+                    <div slot="header" class="card-header">
+                        <span>📚 索引设置</span>
+                    </div>
+                    <el-form label-position="top" size="small">
+                        <el-form-item label="分块大小">
+                            <el-slider v-model="settings.chunkSize" :min="100" :max="2000" :step="100" show-input></el-slider>
+                        </el-form-item>
+                        <el-form-item label="分块重叠">
+                            <el-slider v-model="settings.chunkOverlap" :min="0" :max="500" :step="50" show-input></el-slider>
+                        </el-form-item>
+                        <el-form-item label="检索数量">
+                            <el-input-number v-model="settings.topK" :min="1" :max="20"></el-input-number>
+                        </el-form-item>
+                        <el-form-item label="相似度阈值">
+                            <el-input-number v-model="settings.similarityThreshold" :min="0" :max="1" :step="0.1" :precision="2"></el-input-number>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
+
+                <!-- RAG 方法默认设置 -->
+                <el-card class="settings-card">
+                    <div slot="header" class="card-header">
+                        <span>🧠 默认 RAG 方法</span>
+                    </div>
+                    <el-form label-position="top" size="small">
+                        <el-form-item label="选择默认方法">
+                            <el-select v-model="settings.defaultRagMethod" class="full-width">
+                                <el-option-group label="原始文档增强">
+                                    <el-option label="SimpleRAG（简单切块）" value="option1"></el-option>
+                                    <el-option label="Semantic Chunking（语义切块）" value="option2"></el-option>
+                                    <el-option label="Context Enriched Retrieval（上下文增强）" value="option3"></el-option>
+                                </el-option-group>
+                                <el-option-group label="查询文档增强">
+                                    <el-option label="Query Transformation（查询转换）" value="option8"></el-option>
+                                    <el-option label="HyDE（假设文档嵌入）" value="option9"></el-option>
+                                </el-option-group>
+                            </el-select>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
+
+                <!-- 界面设置 -->
+                <el-card class="settings-card">
+                    <div slot="header" class="card-header">
+                        <span>🎨 界面设置</span>
+                    </div>
+                    <el-form label-position="top" size="small">
+                        <el-form-item label="主题">
+                            <el-radio-group v-model="settings.theme">
+                                <el-radio-button label="light">浅色</el-radio-button>
+                                <el-radio-button label="dark">深色</el-radio-button>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="语言">
+                            <el-select v-model="settings.language" class="full-width">
+                                <el-option label="中文" value="zh-CN"></el-option>
+                                <el-option label="English" value="en-US"></el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item label="自动保存对话">
+                            <el-switch v-model="settings.autoSaveChat"></el-switch>
+                            <span class="form-hint">自动保存对话记录到本地</span>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
+
+                <!-- 关于 -->
+                <el-card class="settings-card about-card">
+                    <div slot="header" class="card-header">
+                        <span>ℹ️ 关于</span>
+                    </div>
+                    <div class="about-content">
+                        <div class="about-logo">Y</div>
+                        <h3>RAG Service</h3>
+                        <p class="version">版本 1.0.0</p>
+                        <p class="description">基于 FastAPI + Vue.js 的检索增强生成服务</p>
+                        <div class="tech-stack">
+                            <el-tag size="small">FastAPI</el-tag>
+                            <el-tag size="small">Vue.js 2.7</el-tag>
+                            <el-tag size="small">Element UI</el-tag>
+                            <el-tag size="small">Vector Search</el-tag>
+                        </div>
+                    </div>
+                </el-card>
+            </div>
+
+            <div class="settings-footer">
+                <el-button type="primary" @click="saveSettings" :loading="saving">保存设置</el-button>
+                <el-button @click="resetSettings">恢复默认</el-button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/settings/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    background: #f5f7fa;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#app {
+    height: 100%;
+}
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+}
+
+/* 页面头部 */
+.page-header {
+    margin-bottom: 20px;
+}
+
+.page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+/* 设置内容区 */
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-bottom: 60px;
+}
+
+/* 设置卡片 */
+.settings-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.form-hint {
+    margin-left: 10px;
+    font-size: 12px;
+    color: #909399;
+}
+
+/* 关于卡片 */
+.about-card {
+    grid-column: span 2;
+}
+
+.about-content {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.about-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    font-weight: bold;
+    margin: 0 auto 12px;
+}
+
+.about-content h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 6px;
+}
+
+.version {
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 8px;
+}
+
+.description {
+    font-size: 14px;
+    color: #606266;
+    margin-bottom: 16px;
+}
+
+.tech-stack {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* 底部按钮 */
+.settings-footer {
+    position: fixed;
+    bottom: 0;
+    left: 260px;
+    right: 0;
+    padding: 16px 24px;
+    background: white;
+    border-top: 1px solid #e4e7ed;
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+}
+
+@media (max-width: 1024px) {
+    .settings-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .about-card {
+        grid-column: span 1;
+    }
+    
+    .settings-footer {
+        left: 0;
+    }
+}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/rag/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="rag-container">
+            <!-- 文件管理面板 -->
+            <div class="file-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">📁 文件管理</h2>
+                </div>
+                
+                <!-- 上传区域 -->
+                <div class="upload-section">
+                    <el-upload
+                        class="upload-area"
+                        action="/upload"
+                        :on-success="handleUploadSuccess"
+                        :on-error="handleUploadError"
+                        :before-upload="beforeUpload"
+                        :show-file-list="false"
+                        drag>
+                        <div class="upload-content">
+                            <div class="upload-icon">📤</div>
+                            <div class="upload-text">点击或拖拽文件到此处上传</div>
+                            <div class="upload-hint">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
+                        </div>
+                    </el-upload>
+                </div>
+                
+                <!-- 搜索框 -->
+                <div class="search-box">
+                    <el-input
+                        placeholder="搜索文件名..."
+                        v-model="fileSearch"
+                        prefix-icon="el-icon-search"
+                        size="small"
+                        clearable>
+                    </el-input>
+                </div>
+                
+                <!-- 文件列表 -->
+                <div class="file-list-container">
+                    <div class="file-list-header">
+                        <el-checkbox v-model="selectAll" @change="handleSelectAll">
+                            全选 ({{ selectedFiles.length }}/{{ filteredFiles.length }})
+                        </el-checkbox>
+                    </div>
+                    
+                    <div class="file-list">
+                        <div
+                            v-for="(file, index) in filteredFiles"
+                            :key="file.name"
+                            class="file-item"
+                            :class="{ 'is-selected': selectedFiles.includes(file.name) }"
+                            @click="toggleFileSelection(file.name)">
+                            <el-checkbox
+                                :value="selectedFiles.includes(file.name)"
+                                @change="toggleFileSelection(file.name)"
+                                @click.stop>
+                            </el-checkbox>
+                            <div class="file-icon">{{ getFileIcon(file.type) }}</div>
+                            <div class="file-info">
+                                <div class="file-name" :title="file.name">{{ file.name }}</div>
+                                <div class="file-meta">
+                                    <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                                    <el-tag v-if="file.indexed" type="warning" size="mini" class="indexed-tag">已索引</el-tag>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <el-empty v-if="filteredFiles.length === 0" description="暂无文件" :image-size="80"></el-empty>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="file-actions">
+                    <el-button type="primary" size="small" @click="handleIndexClick" :disabled="selectedFiles.length === 0">
+                        创建索引
+                    </el-button>
+                    <el-button type="warning" size="small" @click="handleDeleteIndexClick" :disabled="selectedFiles.length === 0">
+                        删除索引
+                    </el-button>
+                    <el-button type="danger" size="small" @click="handleDeleteClick" :disabled="selectedFiles.length === 0">
+                        删除文件
+                    </el-button>
+                </div>
+            </div>
+            
+            <!-- 对话面板 -->
+            <div class="chat-panel">
+                <div class="chat-box">
+                    <div class="chat-messages" ref="chatMessages">
+                        <div v-for="(msg, index) in messages" :key="index" class="message" :class="msg.type">
+                            <div class="message-avatar">
+                                <span v-if="msg.type === 'user'">👤</span>
+                                <span v-else class="bot-avatar">🤖</span>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-name">{{ msg.type === 'bot' ? 'AI小助手' : '我' }}</div>
+                                <div class="message-bubble">{{ msg.content }}</div>
+                            </div>
+                        </div>
+                        <div v-if="loading" class="loading-indicator">
+                            <div class="loading-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <span>AI 正在思考...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <div class="input-options">
+                            <el-checkbox v-model="polishEnabled">✨ 润色回答</el-checkbox>
+                        </div>
+                        <div class="input-wrapper">
+                            <el-input
+                                type="textarea"
+                                :rows="2"
+                                placeholder="输入你的问题..."
+                                v-model="inputMessage"
+                                @keydown.enter.exact.prevent="sendMessage"
+                                resize="none">
+                            </el-input>
+                            <el-button type="primary" @click="sendMessage" :loading="loading" class="send-btn">
+                                发送
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧 RAG 方法面板 -->
+                <div class="rag-sidebar">
+                    <div class="rag-sidebar-header">
+                        <h3>🧠 RAG 方法 (17种)</h3>
+                    </div>
+                    
+                    <div class="rag-methods-list">
+                        <!-- 原始文档增强 -->
+                        <div class="method-group">
+                            <div class="group-title">📄 原始文档增强</div>
+                            <div
+                                v-for="method in docMethods"
+                                :key="method.id"
+                                class="method-item"
+                                :class="{ active: selectedMethod === method.id }">
+                                <div class="method-header" @click="toggleMethod(method.id)">
+                                    <span class="method-number">{{ method.num }}</span>
+                                    <div class="method-info">
+                                        <div class="method-name">{{ method.name }}</div>
+                                        <div class="method-desc">{{ method.desc }}</div>
+                                    </div>
+                                    <span class="method-arrow">{{ expandedMethod === method.id ? '▼' : '▶' }}</span>
+                                </div>
+                                <div class="method-detail" v-if="expandedMethod === method.id">
+                                    <div class="detail-row">
+                                        <span class="detail-label">💡 适合场景：</span>
+                                        <span class="detail-value">{{ method.scenarios }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">📚 适合文档：</span>
+                                        <span class="detail-value">{{ method.documents }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 查询文档增强 -->
+                        <div class="method-group">
+                            <div class="group-title">🔍 查询文档增强</div>
+                            <div
+                                v-for="method in queryMethods"
+                                :key="method.id"
+                                class="method-item"
+                                :class="{ active: selectedMethod === method.id }">
+                                <div class="method-header" @click="toggleMethod(method.id)">
+                                    <span class="method-number">{{ method.num }}</span>
+                                    <div class="method-info">
+                                        <div class="method-name">{{ method.name }}</div>
+                                        <div class="method-desc">{{ method.desc }}</div>
+                                    </div>
+                                    <span class="method-arrow">{{ expandedMethod === method.id ? '▼' : '▶' }}</span>
+                                </div>
+                                <div class="method-detail" v-if="expandedMethod === method.id">
+                                    <div class="detail-row">
+                                        <span class="detail-label">💡 适合场景：</span>
+                                        <span class="detail-value">{{ method.scenarios }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">📚 适合文档：</span>
+                                        <span class="detail-value">{{ method.documents }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/rag/app.js"></script>
+</body>
+</html>

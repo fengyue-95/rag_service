@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史记录 - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/history/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="history-container">
+            <div class="page-header">
+                <h1>📜 历史记录</h1>
+                <div class="header-actions">
+                    <el-radio-group v-model="viewMode" size="small">
+                        <el-radio-button label="grouped">按日期</el-radio-button>
+                        <el-radio-button label="list">列表</el-radio-button>
+                    </el-radio-group>
+                    <el-button type="danger" size="small" icon="el-icon-delete" @click="clearAllHistory" :disabled="!hasHistory">
+                        清空历史
+                    </el-button>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <el-input
+                    placeholder="搜索历史记录..."
+                    v-model="searchKeyword"
+                    prefix-icon="el-icon-search"
+                    clearable
+                    class="search-input">
+                </el-input>
+            </div>
+
+            <!-- 分组视图 -->
+            <div class="history-content grouped-view" v-if="viewMode === 'grouped'">
+                <div v-for="(chats, date) in groupedChats" :key="date" class="date-group">
+                    <div class="date-header">
+                        <span class="date-icon">📅</span>
+                        <span class="date-text">{{ date }}</span>
+                        <span class="date-count">{{ chats.length }} 条对话</span>
+                    </div>
+                    <div class="chat-cards">
+                        <div
+                            v-for="chat in chats"
+                            :key="chat.id"
+                            class="chat-card"
+                            @click="openChatDetail(chat)">
+                            <div class="chat-card-header">
+                                <span class="chat-icon">💬</span>
+                                <span class="chat-title">{{ chat.title }}</span>
+                            </div>
+                            <div class="chat-card-preview">{{ getChatPreview(chat) }}</div>
+                            <div class="chat-card-footer">
+                                <span class="chat-time">{{ chat.time }}</span>
+                                <el-button type="text" size="mini" icon="el-icon-delete" class="delete-btn" @click.stop="deleteChat(chat.id)"></el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <el-empty v-if="Object.keys(groupedChats).length === 0" description="暂无历史记录" :image-size="100"></el-empty>
+            </div>
+
+            <!-- 列表视图 -->
+            <div class="history-content list-view" v-if="viewMode === 'list'">
+                <el-table :data="filteredChats" style="width: 100%" row-class-name="history-row" @row-click="openChatDetail">
+                    <el-table-column label="标题" min-width="200">
+                        <template slot-scope="{ row }">
+                            <div class="table-title-cell">
+                                <span class="title-icon">💬</span>
+                                <span class="title-text">{{ row.title }}</span>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="对话内容" min-width="250">
+                        <template slot-scope="{ row }">
+                            <span class="preview-text">{{ getChatPreview(row) }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="time" label="时间" width="160"></el-table-column>
+                    <el-table-column label="操作" width="100">
+                        <template slot-scope="{ row }">
+                            <el-button type="text" size="small" icon="el-icon-delete" @click.stop="deleteChat(row.id)" class="delete-btn"></el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+
+            <!-- 对话详情抽屉 -->
+            <el-drawer title="对话详情" :visible.sync="drawerVisible" direction="rtl" size="50%">
+                <div class="chat-detail" v-if="currentChat">
+                    <div class="detail-header">
+                        <h3>{{ currentChat.title }}</h3>
+                        <span class="detail-time">{{ currentChat.time }}</span>
+                    </div>
+                    <div class="detail-messages">
+                        <div v-for="(msg, i) in currentChat.messages" :key="i" class="detail-message" :class="msg.role">
+                            <div class="detail-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+                            <div class="detail-content">
+                                <div class="detail-role">{{ msg.role === 'user' ? '我' : 'AI助手' }}</div>
+                                <div class="detail-text">{{ msg.content }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-actions">
+                        <el-button type="primary" size="small" @click="continueChat">继续对话</el-button>
+                        <el-button type="danger" size="small" @click="deleteChat(currentChat.id)">删除</el-button>
+                    </div>
+                </div>
+            </el-drawer>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/history/app.js"></script>
+</body>
+</html>

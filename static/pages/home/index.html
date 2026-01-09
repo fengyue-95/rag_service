@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/home/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="home-container">
+            <!-- 欢迎区域 -->
+            <div class="welcome-section">
+                <div class="welcome-icon">Y</div>
+                <h1 class="welcome-title">欢迎使用 RAG Service</h1>
+                <p class="welcome-subtitle">智能文档检索与问答系统</p>
+            </div>
+
+            <!-- 功能卡片区域 -->
+            <div class="features-section">
+                <div class="feature-card" @click="goToPage('rag')">
+                    <div class="feature-icon-bg">
+                        <span class="feature-icon">🔍</span>
+                    </div>
+                    <h3 class="feature-title">RAG 检索</h3>
+                    <p class="feature-desc">上传文档，智能检索与问答</p>
+                </div>
+                <div class="feature-card" @click="goToPage('files')">
+                    <div class="feature-icon-bg">
+                        <span class="feature-icon">📁</span>
+                    </div>
+                    <h3 class="feature-title">文件管理</h3>
+                    <p class="feature-desc">管理您的文档库</p>
+                </div>
+                <div class="feature-card" @click="goToPage('chat')">
+                    <div class="feature-icon-bg">
+                        <span class="feature-icon">💬</span>
+                    </div>
+                    <h3 class="feature-title">智能对话</h3>
+                    <p class="feature-desc">与 AI 进行深度对话</p>
+                </div>
+                <div class="feature-card" @click="goToPage('history')">
+                    <div class="feature-icon-bg">
+                        <span class="feature-icon">📜</span>
+                    </div>
+                    <h3 class="feature-title">历史记录</h3>
+                    <p class="feature-desc">查看历史对话记录</p>
+                </div>
+                <div class="feature-card" @click="goToPage('settings')">
+                    <div class="feature-icon-bg">
+                        <span class="feature-icon">⚙️</span>
+                    </div>
+                    <h3 class="feature-title">系统设置</h3>
+                    <p class="feature-desc">配置系统参数</p>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-value">{{ fileCount }}</div>
+                    <div class="stat-label">已上传文件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ indexedCount }}</div>
+                    <div class="stat-label">已索引文件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">17</div>
+                    <div class="stat-label">RAG 方法</div>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="guide-section">
+                <el-card class="guide-card">
+                    <div slot="header" class="guide-header">
+                        <span>📖 快速开始</span>
+                    </div>
+                    <div class="guide-steps">
+                        <div class="guide-step" @click="goToPage('rag')">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>上传文件</h4>
+                                <p>点击 RAG 页面，上传您的文档</p>
+                            </div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="guide-step" @click="goToPage('rag')">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>创建索引</h4>
+                                <p>选择文件，建立向量索引</p>
+                            </div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="guide-step" @click="goToPage('chat')">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>开始问答</h4>
+                                <p>输入问题，获取智能回答</p>
+                            </div>
+                        </div>
+                    </div>
+                </el-card>
+            </div>
+
+            <!-- 特色功能 -->
+            <div class="features-detail-section">
+                <h2 class="section-title">✨ 核心功能</h2>
+                <div class="features-detail-grid">
+                    <div class="detail-card">
+                        <span class="detail-icon">🧠</span>
+                        <h4>17 种 RAG 方法</h4>
+                        <p>支持 SimpleRAG、Semantic Chunking、Knowledge Graph 等多种高级检索策略</p>
+                    </div>
+                    <div class="detail-card">
+                        <span class="detail-icon">📄</span>
+                        <h4>多格式支持</h4>
+                        <p>支持 TXT、PDF、Word、Excel、CSV、Markdown 等主流文档格式</p>
+                    </div>
+                    <div class="detail-card">
+                        <span class="detail-icon">💬</span>
+                        <h4>智能对话</h4>
+                        <p>基于文档内容的精准问答，支持上下文理解和多轮对话</p>
+                    </div>
+                    <div class="detail-card">
+                        <span class="detail-icon">🔒</span>
+                        <h4>本地部署</h4>
+                        <p>完全本地化运行，保护您的数据隐私和安全</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/home/app.js"></script>
+</body>
+</html>

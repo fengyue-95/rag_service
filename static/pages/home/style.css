@@ -1,0 +1,260 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.home-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 欢迎区域 */
+.welcome-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.welcome-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: white;
+    font-weight: bold;
+    margin: 0 auto 16px;
+    box-shadow: 0 10px 30px rgba(109, 40, 217, 0.3);
+}
+
+.welcome-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.welcome-subtitle {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 功能卡片区域 */
+.features-section {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.feature-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.feature-icon-bg {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+
+.feature-icon {
+    font-size: 24px;
+}
+
+.feature-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.feature-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 统计信息 */
+.stats-section {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 使用说明 */
+.guide-section {
+    margin-bottom: 40px;
+}
+
+.guide-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.guide-header {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.guide-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 0;
+}
+
+.guide-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #F7FAFC;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+}
+
+.guide-step:hover {
+    background: #EDF2F7;
+    transform: scale(1.02);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.step-content {
+    text-align: left;
+}
+
+.step-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1A202C;
+    margin-bottom: 3px;
+}
+
+.step-content p {
+    font-size: 11px;
+    color: #718096;
+}
+
+.step-arrow {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+}
+
+/* 特色功能 */
+.features-detail-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 24px;
+}
+
+.features-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.detail-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.detail-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.detail-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.detail-card p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+    .features-section {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .features-detail-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能对话 - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/chat/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="chat-container">
+            <!-- 对话列表侧边栏 -->
+            <div class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h2>💬 智能对话</h2>
+                    <el-button type="primary" icon="el-icon-plus" circle @click="newChat"></el-button>
+                </div>
+                
+                <div class="chat-search">
+                    <el-input placeholder="搜索对话..." v-model="searchKeyword" prefix-icon="el-icon-search" size="small" clearable>
+                    </el-input>
+                </div>
+                
+                <div class="chat-list">
+                    <div
+                        v-for="chat in filteredChats"
+                        :key="chat.id"
+                        class="chat-item"
+                        :class="{ active: currentChatId === chat.id }"
+                        @click="selectChat(chat.id)">
+                        <div class="chat-item-icon">{{ chat.icon }}</div>
+                        <div class="chat-item-info">
+                            <div class="chat-item-title">{{ chat.title }}</div>
+                            <div class="chat-item-time">{{ chat.time }}</div>
+                        </div>
+                        <el-dropdown trigger="click" @command="handleChatCommand($event, chat.id)">
+                            <span class="chat-item-more">⋯</span>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                                <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </div>
+                    
+                    <el-empty v-if="filteredChats.length === 0" description="暂无对话" :image-size="60"></el-empty>
+                </div>
+            </div>
+            
+            <!-- 对话主区域 -->
+            <div class="chat-main">
+                <div class="chat-messages" ref="chatMessages">
+                    <div v-for="(msg, index) in currentMessages" :key="index" class="message" :class="msg.role">
+                        <div class="message-avatar">
+                            <span v-if="msg.role === 'user'">👤</span>
+                            <span v-else class="bot-avatar">🤖</span>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-role">{{ msg.role === 'user' ? '我' : 'AI助手' }}</div>
+                            <div class="message-text" v-html="formatMessage(msg.content)"></div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="loading" class="loading-indicator">
+                        <div class="loading-spinner"></div>
+                        <span>AI 正在思考...</span>
+                    </div>
+                </div>
+                
+                <!-- 输入区域 -->
+                <div class="chat-input-area">
+                    <div class="input-options">
+                        <el-checkbox v-model="polishEnabled">✨ 润色回答</el-checkbox>
+                        <el-select v-model="selectedModel" size="small" class="model-select">
+                            <el-option label="DeepSeek" value="deepseek"></el-option>
+                            <el-option label="Ollama" value="ollama"></el-option>
+                        </el-select>
+                    </div>
+                    <div class="input-wrapper">
+                        <el-input
+                            type="textarea"
+                            :rows="2"
+                            placeholder="输入问题，按 Enter 发送..."
+                            v-model="inputMessage"
+                            @keydown.enter.exact.prevent="sendMessage"
+                            resize="none">
+                        </el-input>
+                        <el-button type="primary" @click="sendMessage" :loading="loading" class="send-btn">
+                            发送
+                        </el-button>
+                    </div>
+                    
+                    <!-- 建议问题 -->
+                    <div class="suggestions" v-if="suggestions.length > 0 && !inputMessage">
+                        <div class="suggestions-title">💡 建议问题</div>
+                        <div class="suggestions-list">
+                            <el-tag
+                                v-for="(q, i) in suggestions"
+                                :key="i"
+                                class="suggestion-tag"
+                                @click="askSuggestion(q)">
+                                {{ q }}
+                            </el-tag>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/chat/app.js"></script>
+</body>
+</html>

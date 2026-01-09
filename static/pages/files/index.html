@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理 - RAG Service</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="/static/pages/files/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="files-container">
+            <div class="page-header">
+                <h1>📁 文件管理</h1>
+                <div class="header-actions">
+                    <el-button type="primary" icon="el-icon-refresh" @click="loadFiles">刷新</el-button>
+                    <el-button type="success" icon="el-icon-upload2" @click="showUploadDialog">上传文件</el-button>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <el-input
+                    placeholder="搜索文件名..."
+                    v-model="searchKeyword"
+                    prefix-icon="el-icon-search"
+                    clearable
+                    class="search-input">
+                </el-input>
+                <el-select v-model="statusFilter" placeholder="状态筛选" clearable class="status-filter">
+                    <el-option label="全部" value=""></el-option>
+                    <el-option label="已上传" value="uploaded"></el-option>
+                    <el-option label="已索引" value="indexed"></el-option>
+                </el-select>
+            </div>
+
+            <div class="files-content">
+                <el-table
+                    :data="filteredFiles"
+                    style="width: 100%"
+                    row-class-name="file-table-row"
+                    @selection-change="handleSelectionChange">
+                    <el-table-column type="selection" width="50"></el-table-column>
+                    <el-table-column label="文件名" min-width="200">
+                        <template slot-scope="{ row }">
+                            <div class="file-name-cell">
+                                <span class="file-icon">{{ getFileIcon(row.type) }}</span>
+                                <span class="file-name">{{ row.name }}</span>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="size" label="大小" width="100" :formatter="formatSize"></el-table-column>
+                    <el-table-column label="状态" width="120">
+                        <template slot-scope="{ row }">
+                            <el-tag :type="row.indexed ? 'warning' : 'info'" size="small">
+                                {{ row.indexed ? '已索引' : '已上传' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="uploadTime" label="上传时间" width="160"></el-table-column>
+                    <el-table-column label="操作" width="180" fixed="right">
+                        <template slot-scope="{ row }">
+                            <el-button type="text" size="small" @click="viewFile(row)">查看</el-button>
+                            <el-button type="text" size="small" @click="deleteFile(row)" class="danger-btn">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <el-empty v-if="filteredFiles.length === 0" description="暂无文件" :image-size="100"></el-empty>
+            </div>
+
+            <div class="table-footer" v-if="filteredFiles.length > 0">
+                <div class="selection-info">
+                    已选择 <span class="highlight">{{ selectedFiles.length }}</span> 项
+                </div>
+                <div class="footer-actions">
+                    <el-button size="small" @click="handleSelectionChange([])">清空选择</el-button>
+                    <el-button type="warning" size="small" @click="batchIndex" :disabled="selectedFiles.length === 0">
+                        批量索引
+                    </el-button>
+                    <el-button type="danger" size="small" @click="batchDelete" :disabled="selectedFiles.length === 0">
+                        批量删除
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- 上传对话框 -->
+            <el-dialog title="上传文件" :visible.sync="uploadDialogVisible" width="500px">
+                <el-upload
+                    class="upload-dialog"
+                    action="/upload"
+                    :on-success="handleUploadSuccess"
+                    :on-error="handleUploadError"
+                    :before-upload="beforeUpload"
+                    :show-file-list="false"
+                    drag
+                    multiple>
+                    <i class="el-icon-upload"></i>
+                    <div class="el-upload__text">将文件拖拽到此处，或 <em>点击上传</em></div>
+                    <div class="el-upload__tip">支持 txt, md, csv, pdf, doc, docx, xls, xlsx</div>
+                </el-upload>
+            </el-dialog>
+
+            <!-- 文件详情对话框 -->
+            <el-dialog title="文件详情" :visible.sync="detailDialogVisible" width="600px">
+                <div class="file-detail" v-if="currentFile">
+                    <div class="detail-row">
+                        <span class="detail-label">文件名：</span>
+                        <span class="detail-value">{{ currentFile.name }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">大小：</span>
+                        <span class="detail-value">{{ formatSize(null, null, currentFile.size) }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">类型：</span>
+                        <span class="detail-value">{{ currentFile.type }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">状态：</span>
+                        <el-tag :type="currentFile.indexed ? 'warning' : 'info'" size="small">
+                            {{ currentFile.indexed ? '已索引' : '已上传' }}
+                        </el-tag>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">上传时间：</span>
+                        <span class="detail-value">{{ currentFile.uploadTime }}</span>
+                    </div>
+                </div>
+            </el-dialog>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/static/pages/files/app.js"></script>
+</body>
+</html>

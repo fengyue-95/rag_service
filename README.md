@@ -45,7 +45,7 @@ rag_service/
 - `POST /uploads/delete` - 批量删除文件
 
 ### 索引管理
-- `POST /index/mark` - 标记文件已索引
+- `POST /index` - 标记文件已索引
 - `POST /index/delete` - 删除索引
 - `GET /index/status` - 获取索引状态
 
